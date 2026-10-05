@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title></title>
+
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+
+body {
+    padding: 0;
+    background: #f2f2f2;
+    font-family: Arial, sans-serif;
+    color: #111;
+}
+
+
+.window {
+    width: 100%;
+    height: 100dvh;
+    margin: 0;
+    background: white;
+    border: 1px solid #999;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================
+   ШАПКА
+========================= */
+
+.title {
+    flex: 0 0 auto;
+    background: #d9eaf7;
+    border-bottom: 1px solid #999;
+    padding: 10px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+
+.info {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 20px;
+    padding: 8px 10px;
+    background: #eee;
+    border-bottom: 1px solid #aaa;
+    font-size: 16px;
+}
+
+
+/* =========================
+   ТАБЛИЦА
+========================= */
+
+.table-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+
+th {
+    background: #d9d9d9;
+    border: 1px solid #999;
+    padding: 8px 5px;
+    font-size: 17px;
+}
+
+
+th:first-child {
+    width: 44%;
+    text-align: center;
+}
+
+
+th:nth-child(2),
+th:nth-child(3) {
+    width: 28%;
+}
+
+
+td {
+    border: 1px solid #aaa;
+    padding: 4px;
+    height: 48px;
+    font-size: 17px;
+    text-align: right;
+}
+
+
+td:first-child {
+    padding-left: 8px;
+    text-align: left;
+}
+
+
+/* =========================
+   КОЛИЧЕСТВО
+========================= */
+
+.quantity {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+
+
+input {
+    width: 100%;
+    height: 40px;
+    min-width: 0;
+    border: 1px solid #777;
+    border-radius: 2px;
+    font-size: 20px;
+    text-align: center;
+    background: white;
+}
+
+
+select {
+    width: 75px;
+    height: 40px;
+    flex: 0 0 75px;
+    border: 1px solid #777;
+    border-radius: 2px;
+    font-size: 16px;
+    text-align: center;
+    background: white;
+}
+
+
+input:focus,
+select:focus {
+    outline: 2px solid #4a90e2;
+    background: #fffde6;
+}
+
+
+input:disabled,
+select:disabled {
+    background: #e5e5e5;
+    color: #777;
+    cursor: not-allowed;
+}
+
+
+/* =========================
+   КНОПКА +
+========================= */
+
+tfoot td {
+    padding: 4px;
+    height: auto;
+    border: 1px solid #aaa;
+}
+
+
+.add-product {
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+
+    border: 1px solid #777;
+    border-radius: 3px;
+
+    background: #f5f5f5;
+    color: #111;
+
+    font-size: 28px;
+    line-height: 32px;
+    font-weight: normal;
+
+    cursor: pointer;
+}
+
+
+.add-product:active {
+    background: #ddd;
+}
+
+
+/* =========================
+   НИЗ
+========================= */
+
+.bottom {
+    flex: 0 0 auto;
+    padding: 12px;
+    border-top: 1px solid #999;
+    background: #eee;
+}
+
+
+.send {
+    width: 100%;
+    min-height: 55px;
+
+    border: 1px solid #555;
+    border-radius: 3px;
+
+    font-size: 19px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    background: #25D366;
+    color: white;
+    border-color: #128C7E;
+}
+
+
+.hint {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #555;
+    text-align: center;
+}
+
+
+/* =========================
+   ОКНО ДОБАВЛЕНИЯ
+========================= */
+
+.modal {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    z-index: 100;
+
+    background: rgba(0, 0, 0, 0.35);
+
+    align-items: center;
+    justify-content: center;
+}
+
+
+.modal-box {
+    width: calc(100% - 30px);
+    max-width: 400px;
+
+    background: white;
+
+    border: 1px solid #888;
+    border-radius: 4px;
+
+    padding: 15px;
+
+    box-shadow: 0 3px 15px rgba(0,0,0,.25);
+}
+
+
+.modal-title {
+    font-size: 19px;
+    font-weight: bold;
+
+    margin-bottom: 12px;
+}
+
+
+.modal-box label {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-size: 14px;
+}
+
+
+.product-name {
+    width: 100%;
+    height: 42px;
+
+    margin-bottom: 12px;
+
+    border: 1px solid #777;
+    border-radius: 2px;
+
+    padding: 5px 8px;
+
+    font-size: 18px;
+    text-align: left;
+}
+
+
+.product-unit {
+    width: 100%;
+    height: 42px;
+
+    margin-bottom: 15px;
+
+    font-size: 17px;
+}
+
+
+.modal-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+
+.modal-buttons button {
+    flex: 1;
+
+    min-height: 44px;
+
+    font-size: 16px;
+
+    border: 1px solid #777;
+    border-radius: 3px;
+
+    cursor: pointer;
+}
+
+
+.add-confirm {
+    background: #d9eaf7;
+}
+
+
+.add-cancel {
+    background: #eee;
+}
+
+
+/* =========================
+   МОБИЛЬНАЯ ВЕРСИЯ
+========================= */
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 0;
+    }
+
+
+    .title {
+        font-size: 18px;
+        padding: 8px;
+    }
+
+
+    .info {
+        font-size: 15px;
+        padding: 7px 8px;
+    }
+
+
+    th {
+        font-size: 15px;
+        padding: 6px 4px;
+    }
+
+
+    td {
+        font-size: 16px;
+        height: 48px;
+    }
+
+
+    input {
+        height: 42px;
+        font-size: 19px;
+    }
+
+
+    select {
+        height: 42px;
+        flex: 0 0 65px;
+        width: 65px;
+        font-size: 15px;
+    }
+
+
+    th:first-child {
+        width: 40%;
+    }
+
+
+    th:nth-child(2),
+    th:nth-child(3) {
+        width: 30%;
+    }
+
+
+    .bottom {
+        padding: 8px;
+    }
+
+
+    .send {
+        min-height: 48px;
+        font-size: 17px;
+    }
+
+
+    .hint {
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+
+    .add-product {
+        height: 40px;
+        min-height: 40px;
+        font-size: 26px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="window">
+
+
+    <!-- =========================
+         ШАПКА
+    ========================== -->
+
+    <div class="title"></div>
+
+
+    <div class="info">
+
+        <div>
+            <b>Филиал:</b>
+            <span id="branch"></span>
+        </div>
+
+
+        <div>
+            <b>Дата:</b>
+            <span id="date"></span>
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         ТАБЛИЦА
+    ========================== -->
+
+    <div class="table-scroll">
+
+        <table id="productsTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Наименование
+                    </th>
+
+                    <th>
+                        Остаток
+                    </th>
+
+                    <th>
+                        Заказ
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody></tbody>
+
+
+            <tfoot>
+
+                <tr>
+
+                    <td colspan="3">
+
+                        <button
+                            class="add-product"
+                            onclick="openAddProduct()"
+                            title="Добавить товар"
+                        >
+                            +
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            </tfoot>
+
+        </table>
+
+    </div>
+
+
+    <!-- =========================
+         НИЖНЯЯ КНОПКА
+    ========================== -->
+
+    <div class="bottom">
+
+        <button
+            class="send"
+            onclick="sendWhatsApp()"
+        >
+            ОТПРАВИТЬ В WHATSAPP
+        </button>
+
+
+        <div class="hint">
+            Заполните остаток и заказ напротив каждого товара
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     ОКНО ДОБАВЛЕНИЯ ТОВАРА
+========================== -->
+
+<div
+    class="modal"
+    id="addProductModal"
+>
+
+    <div class="modal-box">
+
+
+        <div class="modal-title">
+            Добавить товар
+        </div>
+
+
+        <label>
+            Наименование
+        </label>
+
+
+        <input
+            type="text"
+            id="newProductName"
+            class="product-name"
+            placeholder="Например: Апельсин"
+        >
+
+
+        <label>
+            Единица
+        </label>
+
+
+        <select
+            id="newProductUnit"
+            class="product-unit"
+        >
+
+            <option value="м">
+                м
+            </option>
+
+            <option value="кг">
+                кг
+            </option>
+
+            <option value="уп">
+                уп
+            </option>
+
+            <option value="шт">
+                шт
+            </option>
+
+            <option value="ящ">
+                ящ
+            </option>
+
+            <option value="кор">
+                кор
+            </option>
+
+        </select>
+
+
+        <div class="modal-buttons">
+
+            <button
+                class="add-confirm"
+                onclick="addProduct()"
+            >
+                ДОБАВИТЬ
+            </button>
+
+
+            <button
+                class="add-cancel"
+                onclick="closeAddProduct()"
+            >
+                ОТМЕНА
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+/* =========================
+   НАСТРОЙКИ
+========================= */
+
+const phone = "77083400580";
+
+const branch = "Горняк";
+
+
+const units = [
+    "м",
+    "кг",
+    "уп",
+    "шт",
+    "ящ",
+    "кор"
+];
+
+
+const products = [
+
+    { name: "Картофель", unit: "м" },
+    { name: "Капуста", unit: "м" },
+    { name: "Лук", unit: "м" },
+    { name: "Морковь", unit: "м" },
+    { name: "Свекла", unit: "м" },
+    { name: "Чеснок", unit: "м" },
+
+    { name: "Светофор", unit: "ящ" },
+    { name: "Помидор Черри", unit: "ящ" },
+    { name: "Помидор", unit: "ящ" },
+    { name: "Баклажан", unit: "ящ" },
+    { name: "Яблоки Голден", unit: "ящ" },
+    { name: "Лимон", unit: "ящ" },
+
+    { name: "Кабачок", unit: "кг" },
+    { name: "Лист салата", unit: "кг" },
+    { name: "Петрушка", unit: "кг" },
+    { name: "Укроп", unit: "кг" },
+    { name: "Капуста Пекин", unit: "кг" },
+
+    { name: "Огурец Гладкий", unit: "ящ" }
+
+];
+
+
+const days = [
+
+    "Воскресенье",
+    "Понедельник",
+    "Вторник",
+    "Среда",
+    "Четверг",
+    "Пятница",
+    "Суббота"
+
+];
+
+
+const now = new Date();
+
+const day =
+    days[now.getDay()];
+
+
+document.title =
+    `${day} — ${branch}`;
+
+
+document.querySelector(".title").textContent =
+    `Заявка — ${day}`;
+
+
+document.querySelector("#branch").textContent =
+    branch;
+
+
+
+/* =========================
+   СОЗДАНИЕ ТАБЛИЦЫ
+========================= */
+
+function renderProducts() {
+
+    const tbody =
+        document.querySelector(
+            "#productsTable tbody"
+        );
+
+
+    tbody.innerHTML =
+        products.map(product => {
+
+
+            const unitOptions =
+                units.map(unit => {
+
+                    return `
+
+                        <option
+                            value="${unit}"
+                            ${unit === product.unit
+                                ? "selected"
+                                : ""}
+                        >
+                            ${unit}
+                        </option>
+
+                    `;
+
+                }).join("");
+
+
+            return `
+
+                <tr
+                    data-product="${product.name}"
+                >
+
+                    <td>
+                        ${product.name}
+                    </td>
+
+
+                    <td>
+
+                        <div class="quantity">
+
+                            <input
+                                type="text"
+                                inputmode="decimal"
+                                class="stock-input"
+                            >
+
+
+                            <select
+                                class="stock-unit"
+                            >
+
+                                ${unitOptions}
+
+                            </select>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="quantity">
+
+                            <input
+                                type="text"
+                                inputmode="decimal"
+                                class="order-input"
+                            >
+
+
+                            <select
+                                class="order-unit"
+                            >
+
+                                ${unitOptions}
+
+                            </select>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }).join("");
+
+}
+
+
+renderProducts();
+
+
+
+/* =========================
+   ДАТА
+========================= */
+
+function getDate() {
+
+    const now =
+        new Date();
+
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+
+    const year =
+        now.getFullYear();
+
+
+    return `${day}/${month}/${year}`;
+
+}
+
+
+document.getElementById("date").textContent =
+    getDate();
+
+
+
+/* =========================
+   ПОЛУЧЕНИЕ ЗНАЧЕНИЯ
+========================= */
+
+function getValue(input) {
+
+    let value =
+        input.value.trim();
+
+
+    if (value === "") {
+        return 0;
+    }
+
+
+    if (value === "-") {
+        return "-";
+    }
+
+
+    value =
+        value.replace(
+            ",",
+            "."
+        );
+
+
+    const number =
+        Number(value);
+
+
+    if (
+        Number.isNaN(number)
+    ) {
+
+        return 0;
+
+    }
+
+
+    return number;
+
+}
+
+
+
+/* =========================
+   ФОРМАТ ЧИСЛА
+========================= */
+
+function formatNumber(value) {
+
+    if (value === "-") {
+        return "-";
+    }
+
+
+    return String(value)
+        .replace(
+            ".",
+            ","
+        );
+
+}
+
+
+
+/* =========================
+   ОБРАБОТКА ВВОДА
+========================= */
+
+document
+    .querySelector(
+        "#productsTable tbody"
+    )
+    .addEventListener(
+        "input",
+        function(e) {
+
+
+            /*
+               Точка → запятая
+            */
+
+            if (
+
+                e.target.classList.contains(
+                    "stock-input"
+                )
+
+                ||
+
+                e.target.classList.contains(
+                    "order-input"
+                )
+
+            ) {
+
+
+                const position =
+                    e.target.selectionStart;
+
+
+                const oldValue =
+                    e.target.value;
+
+
+                const newValue =
+                    oldValue.replace(
+                        /\./g,
+                        ","
+                    );
+
+
+                if (
+                    oldValue !== newValue
+                ) {
+
+                    e.target.value =
+                        newValue;
+
+
+                    try {
+
+                        e.target.setSelectionRange(
+                            position,
+                            position
+                        );
+
+                    } catch (error) {}
+
+                }
+
+            }
+
+
+
+            /*
+               Если это не остаток,
+               дальше ничего не делаем
+            */
+
+            if (
+                !e.target.classList.contains(
+                    "stock-input"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            const row =
+                e.target.closest(
+                    "tr"
+                );
+
+
+            const stockInput =
+                row.querySelector(
+                    ".stock-input"
+                );
+
+
+            const orderInput =
+                row.querySelector(
+                    ".order-input"
+                );
+
+
+            const orderUnit =
+                row.querySelector(
+                    ".order-unit"
+                );
+
+
+            const value =
+                stockInput.value.trim();
+
+
+
+            /*
+               Остаток "-"
+            */
+
+            if (
+                value === "-"
+            ) {
+
+                orderInput.value =
+                    "-";
+
+
+                orderInput.disabled =
+                    true;
+
+
+                orderUnit.disabled =
+                    true;
+
+
+                return;
+
+            }
+
+
+
+            /*
+               Снова число
+            */
+
+            orderInput.disabled =
+                false;
+
+
+            orderUnit.disabled =
+                false;
+
+
+
+            /*
+               Возвращаем заказ
+               из "-" в 0
+            */
+
+            if (
+                orderInput.value.trim() === "-"
+            ) {
+
+                orderInput.value =
+                    "0";
+
+            }
+
+        }
+    );
+
+
+
+/* =========================
+   ДОБАВЛЕНИЕ ТОВАРА
+========================= */
+
+function openAddProduct() {
+
+    const modal =
+        document.getElementById(
+            "addProductModal"
+        );
+
+
+    modal.style.display =
+        "flex";
+
+
+    const nameInput =
+        document.getElementById(
+            "newProductName"
+        );
+
+
+    nameInput.value =
+        "";
+
+
+    nameInput.focus();
+
+}
+
+
+
+function closeAddProduct() {
+
+    document
+        .getElementById(
+            "addProductModal"
+        )
+        .style.display =
+        "none";
+
+}
+
+
+
+function addProduct() {
+
+    const nameInput =
+        document.getElementById(
+            "newProductName"
+        );
+
+
+    const unitInput =
+        document.getElementById(
+            "newProductUnit"
+        );
+
+
+    const name =
+        nameInput.value.trim();
+
+
+    const unit =
+        unitInput.value;
+
+
+
+    /*
+       Проверка названия
+    */
+
+    if (
+        name === ""
+    ) {
+
+        alert(
+            "Введите название товара"
+        );
+
+
+        nameInput.focus();
+
+
+        return;
+
+    }
+
+
+
+    /*
+       Проверка дубликата
+    */
+
+    const exists =
+        products.some(
+            product =>
+
+                product.name
+                    .toLowerCase() ===
+                name.toLowerCase()
+        );
+
+
+    if (exists) {
+
+        alert(
+            "Такой товар уже есть в списке"
+        );
+
+
+        nameInput.focus();
+
+
+        return;
+
+    }
+
+
+
+    /*
+       Добавляем
+    */
+
+    products.push({
+
+        name: name,
+
+        unit: unit
+
+    });
+
+
+
+    /*
+       Обновляем таблицу
+    */
+
+    renderProducts();
+
+
+
+    /*
+       Закрываем окно
+    */
+
+    closeAddProduct();
+
+}
+
+
+
+/* =========================
+   WHATSAPP ТЕКСТ
+========================= */
+
+function createTSV() {
+
+    const date =
+        getDate();
+
+
+    let lines = [];
+
+
+
+    /*
+       Заголовок
+    */
+
+    lines.push(
+        date +
+        " " +
+        branch +
+        "\n"
+    );
+
+
+
+    const rows =
+        document.querySelectorAll(
+            "#productsTable tbody tr"
+        );
+
+
+
+    rows.forEach(row => {
+
+
+        const product =
+            row.dataset.product;
+
+
+        const stockInput =
+            row.querySelector(
+                ".stock-input"
+            );
+
+
+        const stockUnit =
+            row.querySelector(
+                ".stock-unit"
+            );
+
+
+        const orderInput =
+            row.querySelector(
+                ".order-input"
+            );
+
+
+        const orderUnit =
+            row.querySelector(
+                ".order-unit"
+            );
+
+
+        const stock =
+            getValue(
+                stockInput
+            );
+
+
+        const order =
+            getValue(
+                orderInput
+            );
+
+
+
+        /*
+           Остаток "-"
+        */
+
+        if (
+            stock === "-"
+        ) {
+
+            lines.push(
+                product +
+                " — не используется"
+            );
+
+
+            return;
+
+        }
+
+
+
+        /*
+           Остаток 0
+           без единицы
+        */
+
+        let stockText;
+
+
+        if (
+            stock === 0
+        ) {
+
+            stockText =
+                "0";
+
+        }
+
+        else {
+
+            stockText =
+                formatNumber(stock) +
+                " " +
+                stockUnit.value;
+
+        }
+
+
+
+        /*
+           Заказ
+        */
+
+        let orderText;
+
+
+        if (
+            order === 0
+        ) {
+
+            orderText =
+                "0";
+
+        }
+
+        else if (
+            order === "-"
+        ) {
+
+            orderText =
+                "0";
+
+        }
+
+        else {
+
+            orderText =
+                formatNumber(order) +
+                " " +
+                orderUnit.value;
+
+        }
+
+
+
+        /*
+           Строка
+        */
+
+        lines.push(
+
+            product +
+            " — " +
+            stockText +
+            "\t" +
+            orderText
+
+        );
+
+    });
+
+
+
+    return lines.join(
+        "\n"
+    );
+
+}
+
+
+
+/* =========================
+   WHATSAPP
+========================= */
+
+function sendWhatsApp() {
+
+    const text =
+        createTSV();
+
+
+    const url =
+        "https://wa.me/" +
+        phone +
+        "?text=" +
+        encodeURIComponent(
+            text
+        );
+
+
+    window.open(
+        url,
+        "_blank"
+    );
+
+}
+
+
+
+/* =========================
+   ЗАКРЫТИЕ МОДАЛЬНОГО ОКНА
+========================= */
+
+document
+    .getElementById(
+        "addProductModal"
+    )
+    .addEventListener(
+        "click",
+        function(e) {
+
+            if (
+                e.target === this
+            ) {
+
+                closeAddProduct();
+
+            }
+
+        }
+    );
+
+
+
+/* =========================
+   ENTER = ДОБАВИТЬ
+========================= */
+
+document
+    .getElementById(
+        "newProductName"
+    )
+    .addEventListener(
+        "keydown",
+        function(e) {
+
+            if (
+                e.key === "Enter"
+            ) {
+
+                addProduct();
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+</html>
