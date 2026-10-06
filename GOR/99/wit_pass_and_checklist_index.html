@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Заявки поставщикам</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f2f4f7;
+    font-family: Arial, sans-serif;
+    color: #17202a;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.header {
+    background: #24384d;
+    color: white;
+    padding: 14px 16px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 15px;
+}
+
+/* LOGIN */
+
+.login {
+    max-width: 420px;
+    margin: 80px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px #0001;
+    text-align: center;
+}
+
+.login h1 {
+    margin-top: 0;
+}
+
+.login input {
+    width: 100%;
+    padding: 13px;
+    margin: 15px 0;
+    border: 1px solid #ccd4dd;
+    border-radius: 6px;
+}
+
+.btn {
+    width: 100%;
+    border: 0;
+    padding: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-blue {
+    background: #1976d2;
+    color: white;
+}
+
+.btn-green {
+    background: #19a85b;
+    color: white;
+}
+
+/* DATE */
+
+.date-box {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 4px #0001;
+}
+
+.date-title {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.date-sub {
+    color: #687684;
+    margin-top: 5px;
+}
+
+/* SUPPLIERS */
+
+.supplier {
+    background: white;
+    border: 1px solid #d9e0e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.supplier:hover {
+    background: #f8fafc;
+}
+
+.check {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #aeb9c4;
+    border-radius: 5px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.supplier.done .check {
+    background: #19a85b;
+    border-color: #19a85b;
+    color: white;
+}
+
+.supplier-info {
+    flex: 1;
+}
+
+.supplier-name {
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.supplier-status {
+    color: #687684;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.arrow {
+    font-size: 22px;
+    color: #8b98a5;
+}
+
+/* PRODUCTS */
+
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.back {
+    border: 0;
+    background: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.supplier-title {
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.info {
+    background: #eaf3fb;
+    border-radius: 7px;
+    padding: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.table-wrap {
+    background: white;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 1px 4px #0001;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+th,
+td {
+    border-bottom: 1px solid #e5e9ed;
+    padding: 8px;
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background: #f4f6f8;
+    font-weight: bold;
+}
+
+.num {
+    width: 45px;
+    text-align: center;
+}
+
+.stock {
+    width: 90px;
+    text-align: center;
+}
+
+.order {
+    width: 110px;
+}
+
+.order input {
+    width: 80px;
+    padding: 7px;
+    border: 1px solid #ccd4dd;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.send {
+    margin-top: 12px;
+}
+
+/* MESSAGE */
+
+.success {
+    background: white;
+    border-radius: 10px;
+    padding: 35px 20px;
+    text-align: center;
+    box-shadow: 0 1px 5px #0001;
+}
+
+.success-icon {
+    width: 70px;
+    height: 70px;
+    margin: auto;
+    border-radius: 50%;
+    background: #19a85b;
+    color: white;
+    font-size: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.error {
+    color: #d32f2f;
+    margin-top: 10px;
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    .login {
+        margin: 30px auto;
+    }
+
+    .date-title {
+        font-size: 19px;
+    }
+
+    .supplier-name {
+        font-size: 16px;
+    }
+
+    .header {
+        font-size: 18px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">Заявки поставщикам</div>
+<div class="container">
+    <!-- LOGIN -->
+    <section id="loginScreen" class="login">
+        <h1>🔐 Вход</h1>
+        <p>Введите пароль для продолжения</p>
+        <input id="password" type="password" placeholder="Пароль" autocomplete="off">
+
+        <button class="btn btn-blue" onclick="login()">Войти</button>
+
+        <div id="loginError" class="error"></div>
+    </section>
+
+
+    <!-- CHECKLIST -->
+    <section id="checklistScreen" class="hidden">
+
+        <div class="date-box">
+            <div class="date-title" id="todayTitle"></div>
+            <div class="date-sub" id="todaySub"></div>
+        </div>
+
+        <div id="supplierList"></div>
+
+    </section>
+
+
+    <!-- PRODUCTS -->
+    <section id="productsScreen" class="hidden">
+
+        <div class="topbar">
+            <button class="back" onclick="showChecklist()">
+                ← Назад
+            </button>
+
+            <div class="supplier-title" id="productSupplierName"></div>
+        </div>
+
+        <div class="info">
+            <b>Заявка:</b>
+            <span id="requestInfo"></span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="num">№</th>
+                        <th>Товар</th>
+                        <th class="stock">Остаток</th>
+                        <th class="order">Заказать</th>
+                    </tr>
+                </thead>
+
+                <tbody id="productTable"></tbody>
+            </table>
+        </div>
+
+        <button
+            class="btn btn-green send"
+            onclick="sendOrder()"
+        >
+            ➤ Отправить в WhatsApp
+        </button>
+
+    </section>
+
+
+    <!-- SUCCESS -->
+    <section id="successScreen" class="hidden">
+
+        <div class="success">
+
+            <div class="success-icon">✓</div>
+
+            <h2>Заявка отправлена</h2>
+
+            <p id="successText"></p>
+
+            <button
+                class="btn btn-blue"
+                onclick="showChecklist()"
+            >
+                Вернуться к списку
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+
+/* =========================
+   НАСТРОЙКИ
+========================= */
+
+const PASSWORD_LOB = "1303";
+const PASSWORD_GOR = "5689";
+const PASSWORD_NUR = "3215";
+const PASSWORD_PRI = "6845";
+const PASSWORD_SAR = "9023";
+
+/* =========================
+   ПОСТАВЩИКИ
+========================= */
+
+const suppliers = [
+
+    {
+        id: 21,
+        name: "ТОРГОВЫЙ ДОМ ROKOS",
+
+        requestDay: "Пятница",
+        deliveryDay: "Вторник",
+        shop: "Пришахтинск",
+
+        products: [
+            ["ЦБ тушка", 12, 30],
+            ["Фарш 80/20", 8, 25],
+            ["Печень говяжья", 5, 15],
+            ["Филе сельди соленое", 3, 10],
+            ["Сельдь свежеморожен.", 20, 20],
+            ["Скумбрия свежеморожен.", 14, 20],
+            ["Котлеты на гамбургеры", 6, 15],
+            ["Картофель фри", 8, 25],
+            ["Купаты куриные", 10, 20],
+            ["Сосиски Вкусные", 7, 15],
+            ["Крабовые палочки", 12, 20],
+            ["Филе бедра без кожи", 9, 20],
+            ["Телапия", 6, 15],
+            ["Минтай", 11, 20],
+            ["Мясо тазобедренное", 4, 10]
+        ]
+    },
+
+    {
+        id: 22,
+        name: "ИП Хвастунов А.А.",
+
+        requestDay: "Пятница",
+        deliveryDay: "Вторник",
+        shop: "Лободы / Нуркена / Горняк / Сарань / Пришахтинск",
+
+        products: [
+            ["Гурмикс Korean dressings", 12, 30],
+            ["Соус 1", 8, 20],
+            ["Соус 2", 5, 15],
+            ["Соус 3", 3, 10],
+            ["Соус 4", 20, 25],
+            ["Соус 5", 14, 20]
+        ]
+    },
+
+    {
+        id: 23,
+        name: "ООО Поставщик 3",
+
+        requestDay: "Пятница",
+        deliveryDay: "Вторник",
+        shop: "Горняк",
+
+        products: [
+            ["Товар 1", 10, 15],
+            ["Товар 2", 5, 10],
+            ["Товар 3", 8, 20],
+            ["Товар 4", 2, 10],
+            ["Товар 5", 15, 25]
+        ]
+    },
+
+    {
+        id: 24,
+        name: "ООО Поставщик 4",
+
+        requestDay: "Пятница",
+        deliveryDay: "Вторник",
+        shop: "Сарань",
+
+        products: [
+            ["Товар 1", 7, 15],
+            ["Товар 2", 4, 10],
+            ["Товар 3", 11, 20],
+            ["Товар 4", 3, 10],
+            ["Товар 5", 9, 15],
+            ["Товар 6", 5, 10]
+        ]
+    }
+
+];
+
+
+/* =========================
+   ДАТА
+========================= */
+
+const today = new Date();
+
+const dateKey =
+    today.getFullYear() + "-" +
+    String(today.getMonth() + 1).padStart(2, "0") + "-" +
+    String(today.getDate()).padStart(2, "0");
+
+
+const russianDays = [
+    "Воскресенье",
+    "Понедельник",
+    "Вторник",
+    "Среда",
+    "Четверг",
+    "Пятница",
+    "Суббота"
+];
+
+const dayName = russianDays[today.getDay()];
+
+const dateText = today.toLocaleDateString(
+    "ru-RU",
+    {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    }
+);
+
+
+/* =========================
+   LOCAL STORAGE
+========================= */
+
+function getCompleted() {
+
+    return JSON.parse(
+        localStorage.getItem("completedOrders") || "{}"
+    );
+
+}
+
+
+function saveCompleted(supplierId) {
+
+    const completed = getCompleted();
+
+    if (!completed[dateKey]) {
+        completed[dateKey] = {};
+    }
+
+    completed[dateKey][supplierId] = {
+        completed: true,
+        time: new Date().toLocaleTimeString("ru-RU", {
+            hour: "2-digit",
+            minute: "2-digit"
+        })
+    };
+
+    localStorage.setItem(
+        "completedOrders",
+        JSON.stringify(completed)
+    );
+
+}
+
+
+/* =========================
+   LOGIN
+========================= */
+
+function login() {
+
+    const password =
+        document.getElementById("password").value;
+
+    if (password === PASSWORD) {
+
+        sessionStorage.setItem("loggedIn", "1");
+
+        showChecklist();
+
+    } else {
+
+        document.getElementById("loginError").textContent =
+            "Неверный пароль";
+
+    }
+
+}
+
+
+/* =========================
+   ЭКРАНЫ
+========================= */
+
+function hideAll() {
+
+    document
+        .querySelectorAll("section")
+        .forEach(el => el.classList.add("hidden"));
+
+}
+
+
+function showChecklist() {
+
+    hideAll();
+
+    document
+        .getElementById("checklistScreen")
+        .classList.remove("hidden");
+
+    document.getElementById("todayTitle").textContent =
+        dayName + ", " + dateText;
+
+    document.getElementById("todaySub").textContent =
+        "Сегодня: " + suppliers.length + " заявки";
+
+    renderSuppliers();
+
+}
+
+
+function showProducts(supplierId) {
+
+    const supplier =
+        suppliers.find(s => s.id === supplierId);
+
+    if (!supplier) return;
+
+    currentSupplier = supplier;
+
+    hideAll();
+
+    document
+        .getElementById("productsScreen")
+        .classList.remove("hidden");
+
+    document.getElementById("productSupplierName").textContent =
+        supplier.name;
+
+    document.getElementById("requestInfo").textContent =
+        " " +
+        supplier.requestDay +
+        " → доставка: " +
+        supplier.deliveryDay +
+        " | магазин: " +
+        supplier.shop;
+
+    renderProducts();
+
+}
+
+
+/* =========================
+   СПИСОК ПОСТАВЩИКОВ
+========================= */
+
+function renderSuppliers() {
+
+    const list =
+        document.getElementById("supplierList");
+
+    const completed = getCompleted();
+
+    list.innerHTML = "";
+
+    suppliers.forEach(supplier => {
+
+        const done =
+            completed[dateKey] &&
+            completed[dateKey][supplier.id] &&
+            completed[dateKey][supplier.id].completed;
+
+        const time =
+            done
+                ? completed[dateKey][supplier.id].time
+                : "";
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "supplier" + (done ? " done" : "");
+
+        div.onclick = () =>
+            showProducts(supplier.id);
+
+        div.innerHTML = `
+
+            <div class="check">
+                ${done ? "✓" : ""}
+            </div>
+
+            <div class="supplier-info">
+
+                <div class="supplier-name">
+                    ${supplier.name}
+                </div>
+
+                <div class="supplier-status">
+
+                    ${
+                        done
+                        ? "Заявка отправлена " + time
+                        : "Заявка не выполнена"
+                    }
+
+                </div>
+
+            </div>
+
+            <div class="arrow">
+                ${done ? "✓" : "›"}
+            </div>
+
+        `;
+
+        list.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================
+   ТОВАРЫ
+========================= */
+
+let currentSupplier = null;
+
+
+function renderProducts() {
+
+    const tbody =
+        document.getElementById("productTable");
+
+    tbody.innerHTML = "";
+
+    currentSupplier.products.forEach(
+        (product, index) => {
+
+            const name = product[0];
+            const stock = product[1];
+            const defaultOrder = product[2];
+
+            const tr =
+                document.createElement("tr");
+
+            tr.innerHTML = `
+
+                <td class="num">
+                    ${index + 1}
+                </td>
+
+                <td>
+                    ${name}
+                </td>
+
+                <td class="stock">
+                    ${stock}
+                </td>
+
+                <td class="order">
+
+                    <input
+                        type="number"
+                        min="0"
+                        value="${defaultOrder}"
+                        data-product="${name}"
+                    >
+
+                </td>
+
+            `;
+
+            tbody.appendChild(tr);
+
+        }
+    );
+
+}
+
+
+/* =========================
+   ОТПРАВКА
+========================= */
+
+function sendOrder() {
+
+    const inputs =
+        document.querySelectorAll(
+            "#productTable input"
+        );
+
+    const order = [];
+
+    inputs.forEach(input => {
+
+        const quantity =
+            Number(input.value);
+
+        if (quantity > 0) {
+
+            order.push({
+                name: input.dataset.product,
+                quantity: quantity
+            });
+
+        }
+
+    });
+
+
+    if (order.length === 0) {
+
+        alert("Введите хотя бы один товар");
+
+        return;
+
+    }
+
+
+    let message =
+        "ЗАЯВКА\n\n" +
+
+        "Поставщик: " +
+        currentSupplier.name +
+        "\n" +
+
+        "Дата: " +
+        dateText +
+        "\n" +
+
+        "Магазин: " +
+        currentSupplier.shop +
+        "\n\n";
+
+
+    order.forEach(item => {
+
+        message +=
+            item.name +
+            " — " +
+            item.quantity +
+            "\n";
+
+    });
+
+
+    /* СОХРАНЯЕМ ВЫПОЛНЕНИЕ */
+
+    saveCompleted(currentSupplier.id);
+
+
+    /*
+       WhatsApp
+
+       Номер можно указать здесь.
+       Формат: 7701XXXXXXXX
+    */
+
+    const phone = "";
+
+
+    const whatsapp =
+        phone
+        ? "https://wa.me/" +
+          phone +
+          "?text=" +
+          encodeURIComponent(message)
+
+        : "https://wa.me/?text=" +
+          encodeURIComponent(message);
+
+
+    window.open(
+        whatsapp,
+        "_blank"
+    );
+
+
+    /* ПОКАЗЫВАЕМ ПОДТВЕРЖДЕНИЕ */
+
+    hideAll();
+
+    document
+        .getElementById("successScreen")
+        .classList.remove("hidden");
+
+    document.getElementById("successText").innerHTML =
+        "Поставщик: <b>" +
+        currentSupplier.name +
+        "</b><br>" +
+        "Дата: " +
+        dateText;
+
+}
+
+
+/* =========================
+   АВТОВХОД
+========================= */
+
+if (sessionStorage.getItem("loggedIn") === "1") {
+
+    showChecklist();
+
+}
+
+</script>
+
+</body>
+</html>
