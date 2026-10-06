@@ -1,42 +1,267 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>График заявок и поставок</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#eef2f5;font-family:Arial,sans-serif;color:#173f70}.wrap{max-width:1000px;margin:25px auto;padding:15px}
-header{background:linear-gradient(135deg,#15548d,#287cbb);color:#fff;border-radius:14px;padding:25px 28px;box-shadow:0 6px 20px #0002}h1{margin:0 0 10px;font-size:30px}header p{margin:5px 0;line-height:1.45}
-.card{background:#fff;border:1px solid #d5e0e8;border-radius:12px;padding:20px;margin:14px 0;box-shadow:0 3px 12px #0000000c}.title{display:flex;align-items:center;gap:10px;margin-bottom:14px}.pin{width:40px;height:40px;border-radius:50%;background:#1765a5;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}.title h2{margin:0;font-size:21px}
-.label{font-weight:800;margin:13px 0 7px}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.day{border:1px solid #b9cad5;border-radius:8px;padding:9px 3px;text-align:center;cursor:pointer}.day input{display:none}.day:has(input:checked){background:#e1f5e9;border-color:#28a65b;color:#087b3c}.day:has(input:checked):before{content:"✓ ";font-weight:900}.note{width:100%;min-height:55px;border:1px solid #c4d1da;border-radius:8px;padding:10px;font:inherit;resize:vertical}.hint{font-size:13px;color:#6b7b88;margin-top:5px}
-.example{background:#f1f9ff;border-color:#a9d9f2}.examplebox{background:#fff;border:1px solid #c7dce9;border-radius:8px;padding:10px;line-height:1.5}
-.preview{white-space:pre-wrap;background:#f6f9fb;border:1px solid #d4e0e7;border-radius:9px;padding:14px;line-height:1.5;font-size:14px}
-.actions{position:sticky;bottom:0;background:#ffffffee;backdrop-filter:blur(7px);padding:14px;border:1px solid #d2dee6;border-radius:12px;display:flex;gap:10px}.actions button{border:0;border-radius:9px;padding:13px 18px;font-size:16px;font-weight:800;cursor:pointer}.send{background:#1f9d55;color:white;flex:1}.clear{background:#e9eef2;color:#345}
-@media(max-width:650px){.days{grid-template-columns:repeat(4,1fr)}.actions{flex-direction:column}.actions button{width:100%}}
-</style></head><body><div class="wrap">
-<header><h1>Уважаемые партнёры!</h1><p>Пожалуйста, укажите, в какие дни у вас принимаются заявки и осуществляется поставка товаров по филиалам.</p><p>Мы переходим на новый уровень и хотим улучшить организацию работы и планирование поставок.</p></header>
+<!doctype html>
+<html lang="ru">
 
-<section class="card example"><div class="title"><div class="pin">✓</div><h2>Пример заполнения — ЛОБОДЫ</h2></div>
-<div class="label">День заявки</div><div class="days">
-<label class="day">✓ Пн</label><label class="day">☐ Вт</label><label class="day">☐ Ср</label><label class="day">✓ Чт</label><label class="day">☐ Пт</label><label class="day">☐ Сб</label><label class="day">☐ Вс</label></div>
-<div class="label">День поставки</div><div class="days">
-<label class="day">☐ Пн</label><label class="day">✓ Вт</label><label class="day">☐ Ср</label><label class="day">☐ Чт</label><label class="day">✓ Пт</label><label class="day">☐ Сб</label><label class="day">☐ Вс</label></div>
-<div class="label">Примечание</div><div class="examplebox">Отгрузку осуществляем на следующий день.</div></section>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>График заявок и поставок</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
 
-<div id="branches"></div>
-<section class="card"><div class="title"><div class="pin">i</div><h2>Что можно указать в примечании?</h2></div><p>Например: <b>раз в месяц</b>, <b>2 раза в месяц</b>, <b>через неделю</b>, <b>за 1 день</b>, <b>за 2 дня</b> и т. д.</p></section>
-<section class="card"><div class="title"><div class="pin">✉</div><h2>Сообщение для WhatsApp</h2></div><div id="preview" class="preview"></div></section>
-<div class="actions"><button class="clear" onclick="clearForm()">Очистить</button><button class="send" onclick="sendWhatsApp()">✓ Отправить заполненную форму в WhatsApp</button></div>
-</div>
+        body {
+            margin: 0;
+            background: #eef2f5;
+            font-family: Arial, sans-serif;
+            color: #173f70
+        }
 
-<script>
-const branches=["ЛОБОДЫ","НУРКЕН","ПРИШАХТИНСК","ГОРНЯК","САРАНЬ"],days=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],root=document.getElementById("branches");
-branches.forEach((name,i)=>{root.insertAdjacentHTML("beforeend",`
+        .wrap {
+            max-width: 1000px;
+            margin: 25px auto;
+            padding: 15px
+        }
+
+        header {
+            background: linear-gradient(135deg, #15548d, #287cbb);
+            color: #fff;
+            border-radius: 14px;
+            padding: 25px 28px;
+            box-shadow: 0 6px 20px #0002
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 30px
+        }
+
+        header p {
+            margin: 5px 0;
+            line-height: 1.45
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #d5e0e8;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 14px 0;
+            box-shadow: 0 3px 12px #0000000c
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px
+        }
+
+        .pin {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1765a5;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800
+        }
+
+        .title h2 {
+            margin: 0;
+            font-size: 21px
+        }
+
+        .label {
+            font-weight: 800;
+            margin: 13px 0 7px
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 7px
+        }
+
+        .day {
+            border: 1px solid #b9cad5;
+            border-radius: 8px;
+            padding: 9px 3px;
+            text-align: center;
+            cursor: pointer
+        }
+
+        .day input {
+            display: none
+        }
+
+        .day:has(input:checked) {
+            background: #e1f5e9;
+            border-color: #28a65b;
+            color: #087b3c
+        }
+
+        .day:has(input:checked):before {
+            content: "✓ ";
+            font-weight: 900
+        }
+
+        .note {
+            width: 100%;
+            min-height: 55px;
+            border: 1px solid #c4d1da;
+            border-radius: 8px;
+            padding: 10px;
+            font: inherit;
+            resize: vertical
+        }
+
+        .hint {
+            font-size: 13px;
+            color: #6b7b88;
+            margin-top: 5px
+        }
+
+        .example {
+            background: #f1f9ff;
+            border-color: #a9d9f2
+        }
+
+        .examplebox {
+            background: #fff;
+            border: 1px solid #c7dce9;
+            border-radius: 8px;
+            padding: 10px;
+            line-height: 1.5
+        }
+
+        .preview {
+            white-space: pre-wrap;
+            background: #f6f9fb;
+            border: 1px solid #d4e0e7;
+            border-radius: 9px;
+            padding: 14px;
+            line-height: 1.5;
+            font-size: 14px
+        }
+
+        .actions {
+            position: sticky;
+            bottom: 0;
+            background: #ffffffee;
+            backdrop-filter: blur(7px);
+            padding: 14px;
+            border: 1px solid #d2dee6;
+            border-radius: 12px;
+            display: flex;
+            gap: 10px
+        }
+
+        .actions button {
+            border: 0;
+            border-radius: 9px;
+            padding: 13px 18px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer
+        }
+
+        .send {
+            background: #1f9d55;
+            color: white;
+            flex: 1
+        }
+
+        .clear {
+            background: #e9eef2;
+            color: #345
+        }
+
+        @media(max-width:650px) {
+            .days {
+                grid-template-columns: repeat(4, 1fr)
+            }
+
+            .actions {
+                flex-direction: column
+            }
+
+            .actions button {
+                width: 100%
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <h1>Уважаемые партнёры!</h1>
+            <p>Пожалуйста, укажите, в какие дни у вас принимаются заявки и осуществляется поставка товаров по филиалам.
+            </p>
+            <p>Мы переходим на новый уровень и хотим улучшить организацию работы и планирование поставок.</p>
+        </header>
+
+        <section class="card example">
+            <div class="title">
+                <div class="pin">✓</div>
+                <h2>Пример заполнения — ЛОБОДЫ</h2>
+            </div>
+            <div class="label">День заявки</div>
+            <div class="days">
+                <label class="day">✓ Пн</label><label class="day">☐ Вт</label><label class="day">☐ Ср</label><label
+                    class="day">✓ Чт</label><label class="day">☐ Пт</label><label class="day">☐ Сб</label><label
+                    class="day">☐ Вс</label>
+            </div>
+            <div class="label">День поставки</div>
+            <div class="days">
+                <label class="day">☐ Пн</label><label class="day">✓ Вт</label><label class="day">☐ Ср</label><label
+                    class="day">☐ Чт</label><label class="day">✓ Пт</label><label class="day">☐ Сб</label><label
+                    class="day">☐ Вс</label>
+            </div>
+            <div class="label">Примечание</div>
+            <div class="examplebox">Отгрузку осуществляем на следующий день.</div>
+        </section>
+
+        <div id="branches"></div>
+        <section class="card">
+            <div class="title">
+                <div class="pin">i</div>
+                <h2>Что можно указать в примечании?</h2>
+            </div>
+            <p>Например: <b>раз в месяц</b>, <b>2 раза в месяц</b>, <b>через неделю</b>, <b>за 1 день</b>, <b>за 2
+                    дня</b> и т. д.</p>
+        </section>
+        <section class="card">
+            <div class="title">
+                <div class="pin">✉</div>
+                <h2>Сообщение для WhatsApp</h2>
+            </div>
+            <div id="preview" class="preview"></div>
+        </section>
+        <div class="actions"><button class="clear" onclick="clearForm()">Очистить</button><button class="send"
+                onclick="sendWhatsApp()">✓ Отправить заполненную форму в WhatsApp</button></div>
+    </div>
+
+    <script>
+        const branches = ["ЛОБОДЫ", "НУРКЕН", "ПРИШАХТИНСК", "ГОРНЯК", "САРАНЬ"], days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], root = document.getElementById("branches");
+        branches.forEach((name, i) => {
+            root.insertAdjacentHTML("beforeend", `
 <section class="card" data-branch="${name}">
-<div class="title"><div class="pin">${i+1}</div><h2>${name}</h2></div>
-<div class="label">День заявки</div><div class="days">${days.map(d=>`<label class="day"><input type="checkbox" data-type="request" value="${d}">${d}</label>`).join("")}</div>
-<div class="label">День поставки</div><div class="days">${days.map(d=>`<label class="day"><input type="checkbox" data-type="delivery" value="${d}">${d}</label>`).join("")}</div>
+<div class="title"><div class="pin">${i + 1}</div><h2>${name}</h2></div>
+<div class="label">День заявки</div><div class="days">${days.map(d => `<label class="day"><input type="checkbox" data-type="request" value="${d}">${d}</label>`).join("")}</div>
+<div class="label">День поставки</div><div class="days">${days.map(d => `<label class="day"><input type="checkbox" data-type="delivery" value="${d}">${d}</label>`).join("")}</div>
 <div class="label">Примечание</div><textarea class="note" placeholder="Например: отгрузка на следующий день, 2 раза в месяц, за 1 день..."></textarea>
-<div class="hint">Можно выбрать несколько дней.</div></section>`);});
-function vals(card,type){return [...card.querySelectorAll(`input[data-type="${type}"]:checked`)].map(x=>x.value)}
-function build(){let s="Здравствуйте!\n\nОтправляю заполненный график заявок и поставок по филиалам.\n\n";document.querySelectorAll("#branches .card").forEach(c=>{let r=vals(c,"request"),d=vals(c,"delivery"),n=c.querySelector(".note").value.trim();s+=`*${c.dataset.branch}*\nДень заявки: ${r.length?r.join(", "):"не указано"}\nДень поставки: ${d.length?d.join(", "):"не указано"}\nПримечание: ${n||"не указано"}\n\n`});return s+"Спасибо! Будем признательны за заполненную информацию."; }
-function update(){document.getElementById("preview").textContent=build()}document.addEventListener("change",update);document.addEventListener("input",update);update();
-function sendWhatsApp(){window.open("https://wa.me/87083400580?text="+encodeURIComponent(build()),"_blank")}
-function clearForm(){document.querySelectorAll("#branches input").forEach(x=>x.checked=false);document.querySelectorAll(".note").forEach(x=>x.value="");update()}
-</script></body></html>
+<div class="hint">Можно выбрать несколько дней.</div></section>`);
+        });
+        function vals(card, type) { return [...card.querySelectorAll(`input[data-type="${type}"]:checked`)].map(x => x.value) }
+        function build() { let s = "Здравствуйте!\n\nОтправляю заполненный график заявок и поставок по филиалам.\n\n"; document.querySelectorAll("#branches .card").forEach(c => { let r = vals(c, "request"), d = vals(c, "delivery"), n = c.querySelector(".note").value.trim(); s += `*${c.dataset.branch}*\nДень заявки: ${r.length ? r.join(", ") : "не указано"}\nДень поставки: ${d.length ? d.join(", ") : "не указано"}\nПримечание: ${n || "не указано"}\n\n` }); return s + "Спасибо! Будем признательны за заполненную информацию."; }
+        function update() { document.getElementById("preview").textContent = build() } document.addEventListener("change", update); document.addEventListener("input", update); update();
+        function sendWhatsApp() { window.open("https://wa.me/+7083400580?text=" + encodeURIComponent(build()), "_blank") }
+        function clearForm() { document.querySelectorAll("#branches input").forEach(x => x.checked = false); document.querySelectorAll(".note").forEach(x => x.value = ""); update() }
+    </script>
+</body>
+
+</html>
