@@ -143,9 +143,12 @@
     }
     .hint {
         margin-top: 8px;
-        font-size: 14px;
-        color: #555;
+        font-size: 16px;
+        color: green;
         text-align: center;
+    }
+    #branch{
+        text-transform: uppercase;
     }
     @media (max-width: 600px) {
         body {
@@ -192,7 +195,7 @@
             font-size: 17px;
         }
         .hint {
-            font-size: 12px;
+            font-size: 16px;
             margin-top: 5px;
         }
     }
@@ -213,15 +216,15 @@
             </table>
         </div>
         <div class="bottom">
-            <button class="send" onclick="sendWhatsApp()">ОТПРАВИТЬ В WHATSAPP</button>
-            <div class="hint">Заполните остаток и заказ напротив каждого товара, выбирайте единицу измерения внимательнее!<br>ЕСЛИ на остатке кол-во в ШТ изменяйте единицу измерения, если остаток например 6 шт а заказать необходимо ящик то ИЗМЕНЯЙТЕ единицу измерения на ЯЩ. </div>
+            <button class="send" onclick="sendWhatsApp()">ОТПРАВИТЬ ОПЕРАТОРУ ЗАКАЗОВ</button>
+            <div class="hint">Заполните остаток и заказ напротив каждого товара, выбирайте единицу измерения внимательнее!</div>
         </div>
     </div>
     <script>
         const phone = "77083400580";
-        const branch = "Сарань";
+        const branch = "Горняк";
         const supplier = "САЛТИН СЫР";
-        const units = [ "м", "кг", "уп", "шт", "ящ", "кор" ];
+        const units = [ "м", "в", "б", "кг", "уп", "шт", "ящ", "кор" ];
         const products = [
             { name: "Моцарелла",            unit: "кг" },
             { name: "Брынза",               unit: "кг" },
@@ -232,7 +235,7 @@
         const now = new Date();
         const day = days[now.getDay()];
         document.title = `${day} — ${branch}`;
-        document.querySelector(".title").textContent = `Заявка — ${day}`;
+        document.querySelector(".title").textContent = `Заказ товаров — ${day}`;
         document.querySelector("#branch").textContent = branch;
         document.querySelector("#supplier").textContent = supplier;
         /* ======= СОЗДАНИЕ ТАБЛИЦЫ ======= */
