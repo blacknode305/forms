@@ -51,8 +51,8 @@ button{padding:9px 14px;border:1px solid #666;border-radius:4px;font-weight:bold
 <div class="actions">
 <button class="primary" onclick="addMessage()">＋ ДОБАВИТЬ В БАЗУ</button>
 <button class="secondary" onclick="clearForm()">Очистить</button>
-<button class="secondary" onclick="exportDB()">⇩ ЭКСПОРТ</button>
-<button class="secondary" onclick="document.getElementById('importFile').click()">⇧ ИМПОРТ</button>
+<button class="secondary" onclick="exportDB()">⇩ Экспорт</button>
+<button class="secondary" onclick="document.getElementById('importFile').click()">⇧ Импорт</button>
 <input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importDB(event)">
 </div>
 <div id="msg" class="msg"></div>
@@ -65,7 +65,7 @@ button{padding:9px 14px;border:1px solid #666;border-radius:4px;font-weight:bold
 <div class="stat">Филиалов: <b id="bc">0</b></div>
 </div>
 <div id="list"></div>
-<button class="danger" onclick="clearDB()">Очистить всю базу</button>
+<button class="danger" onclick="clearDB()">Очистить всю базу поставщиков</button>
 </section>
 </main>
 </div>
