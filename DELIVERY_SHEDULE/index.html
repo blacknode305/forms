@@ -53,7 +53,7 @@ button{padding:9px 14px;border:1px solid #666;border-radius:4px;font-weight:bold
 <h2>Результат</h2>
 <div class="stats">
 <div class="stat">Поставщиков: <b id="sc">0</b></div>
-<div class="stat">Филиалов: <b id="bc">0</b></div>
+<!-- <div class="stat">Филиалов: <b id="bc">0</b></div> -->
 </div>
 <div id="list"></div>
 <button class="danger" onclick="clearDB()">Очистить всю базу</button>
@@ -135,7 +135,7 @@ function clearForm(){
 
 function render(){
  document.getElementById("sc").textContent=db.length;
- document.getElementById("bc").textContent=db.reduce((n,s)=>n+s.schedules.length,0)/db.length;
+//  document.getElementById("bc").textContent=db.reduce((n,s)=>n+s.schedules.length,0)/db.length;
  const list=document.getElementById("list");
  if(!db.length){list.innerHTML='<div class="empty">База пока пустая.</div>';return}
  list.innerHTML=db.map((s,si)=>{
