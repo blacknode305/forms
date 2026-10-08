@@ -42,6 +42,9 @@ button{padding:9px 14px;border:1px solid #666;border-radius:4px;font-weight:bold
 <div class="actions">
 <button class="primary" onclick="addMessage()">＋ ДОБАВИТЬ В БАЗУ</button>
 <button class="secondary" onclick="clearForm()">Очистить</button>
+<button class="secondary" onclick="exportDB()">⇩ ЭКСПОРТ</button>
+<button class="secondary" onclick="document.getElementById('importFile').click()">⇧ ИМПОРТ</button>
+<input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importDB(event)">
 </div>
 <div id="msg" class="msg"></div>
 </section>
@@ -67,10 +70,31 @@ function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").repl
 
 function parse(text){
  const out=[];
- const re=/(?:^|\n)\s*([А-ЯЁA-Z][А-ЯЁA-Z0-9\s-]*?)\s*\n\s*День\s+заявки\s*:\s*([^\n]+)\s*\n\s*День\s+поставки\s*:\s*([^\n]+)(?:\s*\n\s*Примечание\s*:\s*([^\n]+))?/gi;
- let m;
- while((m=re.exec(text))) out.push({branch:m[1].trim(),order:m[2].trim(),delivery:m[3].trim(),note:(m[4]||"").trim()});
- return out;
+ const lines=text.replace(/\r/g,"").split("\n").map(x=>x.trim());
+ let current=null;
+ for(let i=0;i<lines.length;i++){
+   const line=lines[i];
+   if(!line) continue;
+   let m=line.match(/^День\s+заявки\s*:\s*(.+)$/i);
+   if(m && current){ current.order=m[1].trim(); continue; }
+   m=line.match(/^День\s+поставки\s*:\s*(.+)$/i);
+   if(m && current){ current.delivery=m[1].trim(); continue; }
+   m=line.match(/^Примечание\s*:\s*(.+)$/i);
+   if(m && current){ current.note=m[1].trim(); continue; }
+
+   // Строка филиала: название обычно идёт отдельной строкой перед графиком.
+   // Не считаем заголовки письма и служебные строки названием филиала.
+   if(/^[А-ЯЁA-Z0-9][А-ЯЁA-Z0-9\s-]*$/.test(line) &&
+      !/^(ЗДРАВСТВУЙТЕ|СПАСИБО|ПРИВЕТ|ДОБРЫЙ ДЕНЬ|С УВАЖЕНИЕМ)$/i.test(line)){
+      let j=i+1;
+      while(j<lines.length && !lines[j]) j++;
+      if(j<lines.length && /^День\s+заявки\s*:/i.test(lines[j])){
+        current={branch:line.replace(/\s+/g," ").trim(),order:"",delivery:"",note:""};
+        out.push(current);
+      }
+   }
+ }
+ return out.filter(r=>r.order && r.delivery);
 }
 
 function addMessage(){
@@ -123,7 +147,7 @@ function render(){
   ${s.schedules.map((r,ri)=>`
    <div class="branch">
     <div class="bname">${esc(r.branch)}</div>
-    <div class="info"><div><b>Заявка:</b> ${esc(r.order)}</div><div><b>Поставка:</b> ${esc(r.delivery)}</div></div>
+    <div class="info"><div><b>День заявки:</b> ${esc(r.order)}</div><div><b>День поставки:</b> ${esc(r.delivery)}</div></div>
     ${r.note?`<div class="note"><b>Примечание:</b> ${esc(r.note)}</div>`:""}
     <div class="actions">
       <button class="small secondary" onclick="editRow(${si},${ri})">Изменить</button>
@@ -153,6 +177,64 @@ function delSupplier(si){
 function clearDB(){
  if(!db.length||!confirm("Удалить всю базу?"))return;
  db=[];save();render();
+}
+
+function exportDB(){
+ if(!db.length){show("База пустая — экспортировать нечего.","err");return}
+ const data=JSON.stringify(db,null,2);
+ const blob=new Blob([data],{type:"application/json;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ const d=new Date();
+ const stamp=d.toISOString().slice(0,10);
+ a.href=url;
+ a.download="База_поставщиков_"+stamp+".json";
+ document.body.appendChild(a);a.click();a.remove();
+ URL.revokeObjectURL(url);
+ show("База экспортирована в JSON.","ok");
+}
+
+function importDB(event){
+ const file=event.target.files[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=function(){
+   try{
+     const imported=JSON.parse(reader.result);
+     if(!Array.isArray(imported))throw new Error("Файл должен содержать массив поставщиков.");
+     imported.forEach(s=>{
+       if(!s || typeof s.name!=="string" || !Array.isArray(s.schedules))
+         throw new Error("Неверный формат данных.");
+       s.contact=typeof s.contact==="string"?s.contact:"";
+       s.phone=typeof s.phone==="string"?s.phone:"";
+       s.schedules=s.schedules.filter(r=>r && typeof r.branch==="string").map(r=>({
+         branch:r.branch,order:typeof r.order==="string"?r.order:"",
+         delivery:typeof r.delivery==="string"?r.delivery:"",
+         note:typeof r.note==="string"?r.note:""
+       }));
+     });
+     const replace=confirm("Заменить текущую базу импортированной?\n\nОК — заменить\nОтмена — объединить с текущей базой");
+     if(replace){
+       db=imported;
+     }else{
+       imported.forEach(s=>{
+         let existing=db.find(x=>x.name.toLowerCase()===s.name.toLowerCase());
+         if(!existing){db.push(s);return}
+         if(s.contact)existing.contact=s.contact;
+         if(s.phone)existing.phone=s.phone;
+         s.schedules.forEach(r=>{
+           const old=existing.schedules.find(x=>x.branch.toLowerCase()===r.branch.toLowerCase());
+           if(old)Object.assign(old,r);else existing.schedules.push(r);
+         });
+       });
+     }
+     save();render();
+     show("Импорт завершён. Загружено поставщиков: "+imported.length+".","ok");
+   }catch(e){
+     show("Ошибка импорта: "+e.message,"err");
+   }finally{event.target.value=""}
+ };
+ reader.readAsText(file,"utf-8");
 }
 render();
 </script>
