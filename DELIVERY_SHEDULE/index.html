@@ -23,6 +23,15 @@ button{padding:9px 14px;border:1px solid #666;border-radius:4px;font-weight:bold
 .sname{font-size:18px;font-weight:bold}.branch{padding:11px 13px;border-top:1px solid #ddd}
 .bname{font-weight:bold}.info{display:flex;gap:25px;flex-wrap:wrap;margin-top:5px}.note{color:#555;margin-top:5px;font-size:14px}
 .small{padding:5px 9px;font-size:12px}.empty{text-align:center;color:#777;padding:25px}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
+.modal-backdrop.open{display:flex}.modal{background:#fff;width:min(760px,100%);max-height:90vh;overflow:auto;border-radius:10px;box-shadow:0 20px 60px #0004}
+.modal-head{padding:16px 20px;background:#d9eaf7;border-bottom:1px solid #ccd6df;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.modal-head h2{margin:0;font-size:19px}.modal-body{padding:18px 20px}.modal-footer{padding:14px 20px;border-top:1px solid #ddd;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.modal-close{font-size:22px;padding:2px 9px;background:transparent;border:0}.modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.modal-field{margin-bottom:10px}.modal-field label{margin-top:0}.modal-schedule{border:1px solid #ddd;border-radius:7px;padding:12px;margin:12px 0}.modal-schedule h3{font-size:15px;margin:0 0 8px}
+.modal-error{color:#9b1c1c;background:#fee2e2;border-radius:5px;padding:9px;margin-bottom:10px;display:none}
+@media(max-width:600px){.modal-grid{grid-template-columns:1fr}.modal-body{padding:14px}.modal-head,.modal-footer{padding:12px 14px}}
 </style>
 </head>
 <body>
@@ -53,12 +62,20 @@ button{padding:9px 14px;border:1px solid #666;border-radius:4px;font-weight:bold
 <h2>Результат</h2>
 <div class="stats">
 <div class="stat">Поставщиков: <b id="sc">0</b></div>
-<!-- <div class="stat">Филиалов: <b id="bc">0</b></div> -->
+<div class="stat">Филиалов: <b id="bc">0</b></div>
 </div>
 <div id="list"></div>
 <button class="danger" onclick="clearDB()">Очистить всю базу</button>
 </section>
 </main>
+</div>
+
+
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true" onclick="if(event.target===this)closeModal()">
+ <div class="modal">
+  <div class="modal-head"><h2 id="modalTitle">Редактирование</h2><button class="modal-close" aria-label="Закрыть" onclick="closeModal()">×</button></div>
+  <div class="modal-body" id="modalBody"></div><div class="modal-footer" id="modalFooter"></div>
+ </div>
 </div>
 
 <script>
@@ -135,7 +152,7 @@ function clearForm(){
 
 function render(){
  document.getElementById("sc").textContent=db.length;
-//  document.getElementById("bc").textContent=db.reduce((n,s)=>n+s.schedules.length,0)/db.length;
+ document.getElementById("bc").textContent=db.reduce((n,s)=>n+s.schedules.length,0)/db.length;
  const list=document.getElementById("list");
  if(!db.length){list.innerHTML='<div class="empty">База пока пустая.</div>';return}
  list.innerHTML=db.map((s,si)=>{
@@ -147,7 +164,10 @@ function render(){
     <div class="sname">${opened?'▾':'▸'} ${esc(s.name)}</div>
     <div class="toggle-hint">${opened?'Нажмите, чтобы скрыть информацию':'Нажмите, чтобы открыть информацию'}</div>
    </div>
-   <button class="small danger" onclick="event.stopPropagation();delSupplier(${si})">Удалить</button>
+   <div class="actions" style="margin:0">
+    <button class="small secondary" onclick="event.stopPropagation();editSupplier(${si})">Изменить</button>
+    <button class="small danger" onclick="event.stopPropagation();delSupplier(${si})">Удалить</button>
+   </div>
   </div>
   ${opened?`<div class="supplier-content">
    ${s.contact||s.phone?`<div class="branch"><div class="info">${s.contact?`<div><b>Контактное лицо:</b> ${esc(s.contact)}</div>`:''}${s.phone?`<div><b>Телефон:</b> ${esc(s.phone)}</div>`:''}</div></div>`:''}
@@ -156,10 +176,10 @@ function render(){
      <div class="bname">${esc(r.branch)}</div>
      <div class="info"><div><b>День заявки:</b> ${esc(r.order)}</div><div><b>День поставки:</b> ${esc(r.delivery)}</div></div>
      ${r.note?`<div class="note"><b>Примечание:</b> ${esc(r.note)}</div>`:""}
-     <div class="actions">
+     <!-- <div class="actions">
       <button class="small secondary" onclick="editRow(${si},${ri})">Изменить</button>
       <button class="small danger" onclick="delRow(${si},${ri})">Удалить</button>
-     </div>
+     </div> -->
     </div>`).join("")}
   </div>`:''}
  </div>`;
@@ -171,26 +191,105 @@ function toggleSupplier(si){
  render();
 }
 
+function openModal(title, body, buttons){
+ const backdrop=document.getElementById("modalBackdrop");
+ document.getElementById("modalTitle").textContent=title;
+ document.getElementById("modalBody").innerHTML=body;
+ document.getElementById("modalFooter").innerHTML=buttons||'<button class="secondary" onclick="closeModal()">Закрыть</button>';
+ backdrop.classList.add("open");backdrop.setAttribute("aria-hidden","false");
+}
+function closeModal(){const b=document.getElementById("modalBackdrop");b.classList.remove("open");b.setAttribute("aria-hidden","true");}
+function modalError(text){const e=document.getElementById("modalError");if(e){e.textContent=text;e.style.display="block";}}
+function editSupplier(si){
+ const s=db[si];if(!s)return;
+ const schedules=s.schedules.map((r,ri)=>`
+  <div class="modal-schedule">
+   <h3>Филиал ${ri+1}</h3><div class="modal-grid">
+    <div class="modal-field"><label>Название филиала</label><input data-key="branch" value="${esc(r.branch)}"></div>
+    <div class="modal-field"><label>День заявки</label><input data-key="order" value="${esc(r.order)}"></div>
+    <div class="modal-field"><label>День поставки</label><input data-key="delivery" value="${esc(r.delivery)}"></div>
+    <div class="modal-field"><label>Примечание</label><input data-key="note" value="${esc(r.note)}"></div>
+   </div><label style="font-weight:normal"><input type="checkbox" data-key="remove" style="width:auto"> Удалить этот филиал</label>
+  </div>`).join("");
+ openModal("Редактирование поставщика",`
+  <div id="modalError" class="modal-error"></div>
+  <div class="modal-field"><label>Название поставщика</label><input id="editSupplierName" value="${esc(s.name)}"></div>
+  <div class="modal-grid">
+   <div class="modal-field"><label>Контактное лицо</label><input id="editSupplierContact" value="${esc(s.contact||"")}"></div>
+   <div class="modal-field"><label>Телефон</label><input id="editSupplierPhone" type="tel" value="${esc(s.phone||"")}"></div>
+  </div><h3 style="margin:18px 0 8px">Графики филиалов</h3>
+  ${schedules || '<p>У поставщика пока нет графиков.</p>'}
+  <button class="secondary" type="button" onclick="addScheduleField()">＋ Добавить филиал</button>
+ `,`<button class="secondary" onclick="closeModal()">Отмена</button><button class="primary" onclick="saveSupplierEdit(${si})">Сохранить изменения</button>`);
+}
+function addScheduleField(){
+ const body=document.getElementById("modalBody"),div=document.createElement("div");div.className="modal-schedule";
+ div.innerHTML=`<h3>Новый филиал</h3><div class="modal-grid">
+ <div class="modal-field"><label>Название филиала</label><input data-key="branch"></div>
+ <div class="modal-field"><label>День заявки</label><input data-key="order"></div>
+ <div class="modal-field"><label>День поставки</label><input data-key="delivery"></div>
+ <div class="modal-field"><label>Примечание</label><input data-key="note"></div></div>
+ <label style="font-weight:normal"><input type="checkbox" data-key="remove" style="width:auto"> Удалить этот филиал</label>`;
+ body.insertBefore(div,body.querySelector("button.secondary"));
+}
+function saveSupplierEdit(si){
+ const s=db[si];if(!s)return;
+ const name=document.getElementById("editSupplierName").value.trim();
+ if(!name){modalError("Введите название поставщика.");return;}
+ if(db.some((x,i)=>i!==si&&x.name.toLocaleLowerCase()===name.toLocaleLowerCase())){modalError("Поставщик с таким названием уже есть в базе.");return;}
+ const schedules=[];
+ for(const el of document.querySelectorAll("#modalBody .modal-schedule")){
+   if(el.querySelector('[data-key="remove"]').checked)continue;
+   const get=k=>el.querySelector(`[data-key="${k}"]`).value.trim();
+   const branch=get("branch"),order=get("order"),delivery=get("delivery"),note=get("note");
+   if(!branch&&!order&&!delivery&&!note)continue;
+   if(!branch){modalError("У каждого графика должно быть название филиала.");return;}
+   if(schedules.some(x=>x.branch.toLocaleLowerCase()===branch.toLocaleLowerCase())){modalError("Названия филиалов не должны повторяться.");return;}
+   schedules.push({branch,order,delivery,note});
+ }
+ s.name=name;s.contact=document.getElementById("editSupplierContact").value.trim();
+ s.phone=document.getElementById("editSupplierPhone").value.trim();s.schedules=schedules;
+ openedSuppliers.clear();openedSuppliers.add(si);save();render();closeModal();show("Данные поставщика сохранены.","ok");
+}
 function editRow(si,ri){
- const r=db[si].schedules[ri];
- const branch=prompt("Филиал:",r.branch);if(branch===null)return;
- const order=prompt("Дни заявки:",r.order);if(order===null)return;
- const delivery=prompt("Дни поставки:",r.delivery);if(delivery===null)return;
- const note=prompt("Примечание:",r.note);if(note===null)return;
- Object.assign(r,{branch:branch.trim(),order:order.trim(),delivery:delivery.trim(),note:note.trim()});
- save();render();
+ const r=db[si]?.schedules[ri];if(!r)return;
+ openModal("Редактирование филиала",`
+  <div id="modalError" class="modal-error"></div>
+  <div class="modal-field"><label>Название филиала</label><input id="editBranch" value="${esc(r.branch)}"></div>
+  <div class="modal-field"><label>День заявки</label><input id="editOrder" value="${esc(r.order)}"></div>
+  <div class="modal-field"><label>День поставки</label><input id="editDelivery" value="${esc(r.delivery)}"></div>
+  <div class="modal-field"><label>Примечание</label><input id="editNote" value="${esc(r.note||"")}"></div>
+ `,`<button class="secondary" onclick="closeModal()">Отмена</button><button class="primary" onclick="saveRowEdit(${si},${ri})">Сохранить изменения</button>`);
+}
+function saveRowEdit(si,ri){
+ const s=db[si],r=s?.schedules[ri];if(!r)return;
+ const branch=document.getElementById("editBranch").value.trim();
+ const order=document.getElementById("editOrder").value.trim();
+ const delivery=document.getElementById("editDelivery").value.trim();
+ const note=document.getElementById("editNote").value.trim();
+ if(!branch){modalError("Введите название филиала.");return;}
+ if(s.schedules.some((x,i)=>i!==ri&&x.branch.toLocaleLowerCase()===branch.toLocaleLowerCase())){
+   modalError("У этого поставщика уже есть филиал с таким названием.");return;
+ }
+ Object.assign(r,{branch,order,delivery,note});
+ save();render();closeModal();show("Данные филиала сохранены.","ok");
+}
+function askModal(title,text,yesLabel,onYes){
+ openModal(title,`<p style="margin:0;line-height:1.5">${esc(text)}</p>`,
+  `<button class="secondary" onclick="closeModal()">Отмена</button><button class="danger" id="modalYes">${esc(yesLabel||"Подтвердить")}</button>`);
+ document.getElementById("modalYes").onclick=()=>{closeModal();onYes();};
 }
 function delRow(si,ri){
- if(!confirm("Удалить график «"+db[si].schedules[ri].branch+"»?"))return;
- db[si].schedules.splice(ri,1);if(!db[si].schedules.length)db.splice(si,1);save();render();
+ const r=db[si].schedules[ri];
+ askModal("Удалить график","Удалить график «"+r.branch+"»?","Удалить",()=>{db[si].schedules.splice(ri,1);if(!db[si].schedules.length)db.splice(si,1);save();render();});
 }
 function delSupplier(si){
- if(!confirm("Удалить поставщика «"+db[si].name+"»?"))return;
- db.splice(si,1);save();render();
+ const name=db[si].name;
+ askModal("Удалить поставщика","Удалить поставщика «"+name+"» вместе со всеми графиками?","Удалить",()=>{db.splice(si,1);save();render();});
 }
 function clearDB(){
- if(!db.length||!confirm("Удалить всю базу?"))return;
- db=[];save();render();
+ if(!db.length)return;
+ askModal("Очистить базу","Удалить всю базу поставщиков и графиков? Это действие нельзя отменить.","Очистить",()=>{db=[];save();render();show("База очищена.","ok");});
 }
 
 function exportDB(){
@@ -227,24 +326,25 @@ function importDB(event){
          note:typeof r.note==="string"?r.note:""
        }));
      });
-     const replace=confirm("Заменить текущую базу импортированной?\n\nОК — заменить\nОтмена — объединить с текущей базой");
-     if(replace){
-       db=imported;
-     }else{
-       imported.forEach(s=>{
-         let existing=db.find(x=>x.name.toLowerCase()===s.name.toLowerCase());
-         if(!existing){db.push(s);return}
-         if(s.contact)existing.contact=s.contact;
-         if(s.phone)existing.phone=s.phone;
-         s.schedules.forEach(r=>{
-           const old=existing.schedules.find(x=>x.branch.toLowerCase()===r.branch.toLowerCase());
-           if(old)Object.assign(old,r);else existing.schedules.push(r);
-         });
-       });
-     }
-     save();render();
-     show("Импорт завершён. Загружено поставщиков: "+imported.length+".","ok");
-   }catch(e){
+     openModal("Импорт базы",`<p>Как импортировать ${imported.length} поставщиков?</p>`,
+       `<button class="secondary" onclick="closeModal()">Отмена</button><button class="secondary" id="mergeImport">Объединить</button><button class="primary" id="replaceImport">Заменить базу</button>`);
+      document.getElementById("replaceImport").onclick=function(){
+        db=imported;save();render();closeModal();show("Импорт завершён: база заменена. Поставщиков: "+imported.length+".","ok");
+      };
+      document.getElementById("mergeImport").onclick=function(){
+        imported.forEach(s=>{
+          let existing=db.find(x=>x.name.toLowerCase()===s.name.toLowerCase());
+          if(!existing){db.push(s);return}
+          if(s.contact)existing.contact=s.contact;
+          if(s.phone)existing.phone=s.phone;
+          s.schedules.forEach(r=>{
+            const old=existing.schedules.find(x=>x.branch.toLowerCase()===r.branch.toLowerCase());
+            if(old)Object.assign(old,r);else existing.schedules.push(r);
+          });
+        });
+        save();render();closeModal();show("Импорт завершён: база объединена. Загружено поставщиков: "+imported.length+".","ok");
+      };
+    }catch(e){
      show("Ошибка импорта: "+e.message,"err");
    }finally{event.target.value=""}
  };
