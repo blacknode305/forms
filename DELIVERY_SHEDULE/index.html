@@ -71,21 +71,21 @@ function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").repl
 
 function parse(text){
  const out=[];
- const lines=text.replace(/\r/g,"").split("\n").map(x=>x.trim());
+ // Убираем маркеры WhatsApp/Markdown, например *ЛОБОДЫ* или _НУРКЕН_.
+ const lines=text.replace(/\r/g,"").split("\n").map(x=>x.trim().replace(/^[*_`]+|[*_`]+$/g,"").trim());
  let current=null;
  for(let i=0;i<lines.length;i++){
    const line=lines[i];
    if(!line) continue;
-   let m=line.match(/^День\s+заявки\s*:\s*(.+)$/i);
-   if(m && current){ current.order=m[1].trim(); continue; }
-   m=line.match(/^День\s+поставки\s*:\s*(.+)$/i);
-   if(m && current){ current.delivery=m[1].trim(); continue; }
-   m=line.match(/^Примечание\s*:\s*(.+)$/i);
-   if(m && current){ current.note=m[1].trim(); continue; }
+   let m=line.match(/^День\s+заявки\s*:\s*(.*)$/i);
+   if(m && current){ current.order=m[1].trim() || "не указано"; continue; }
+   m=line.match(/^День\s+поставки\s*:\s*(.*)$/i);
+   if(m && current){ current.delivery=m[1].trim() || "не указано"; continue; }
+   m=line.match(/^Примечание\s*:\s*(.*)$/i);
+   if(m && current){ current.note=m[1].trim() || "не указано"; continue; }
 
-   // Строка филиала: название обычно идёт отдельной строкой перед графиком.
-   // Не считаем заголовки письма и служебные строки названием филиала.
-   if(/^[А-ЯЁA-Z0-9][А-ЯЁA-Z0-9\s-]*$/.test(line) &&
+   // Название филиала может быть выделено звёздочками и отделено пустыми строками.
+   if(/^[А-ЯЁA-Z0-9][А-ЯЁA-Z0-9\s-]*$/i.test(line) &&
       !/^(ЗДРАВСТВУЙТЕ|СПАСИБО|ПРИВЕТ|ДОБРЫЙ ДЕНЬ|С УВАЖЕНИЕМ)$/i.test(line)){
       let j=i+1;
       while(j<lines.length && !lines[j]) j++;
@@ -95,9 +95,9 @@ function parse(text){
       }
    }
  }
- return out.filter(r=>r.order && r.delivery);
+ // «не указано» — допустимое значение: блок филиала всё равно сохраняем.
+ return out.filter(r=>r.order!=="" && r.delivery!=="");
 }
-
 function addMessage(){
  const name=document.getElementById("supplier").value.trim();
  const contact=document.getElementById("contact").value.trim();
