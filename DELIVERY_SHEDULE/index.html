@@ -135,7 +135,7 @@ function clearForm(){
 
 function render(){
  document.getElementById("sc").textContent=db.length;
- document.getElementById("bc").textContent=db.reduce((n,s)=>n+s.schedules.length,0);
+ document.getElementById("bc").textContent=db.reduce((n,s)=>n+s.schedules.length,0)/db.length;
  const list=document.getElementById("list");
  if(!db.length){list.innerHTML='<div class="empty">База пока пустая.</div>';return}
  list.innerHTML=db.map((s,si)=>{
