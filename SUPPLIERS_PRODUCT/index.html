@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>База товаров по поставщикам и филиалам</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#1f2937;background:#f4f6f8}
+*{box-sizing:border-box}body{margin:0;padding:24px;max-width:1200px;margin-inline:auto}
+h1{font-size:28px;margin:0 0 8px}p.sub{color:#64748b;margin:0 0 22px}
+.panel{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin:16px 0;box-shadow:0 2px 8px #0f172a08}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+label{display:block;font-size:13px;font-weight:700;color:#475569;margin-bottom:6px}
+input,textarea,select{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px 11px;font:inherit;background:white}
+textarea{min-height:190px;resize:vertical;line-height:1.5}
+button,.filebtn{border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;font-size:14px}
+.primary{background:#2563eb;color:white}.secondary{background:#e2e8f0;color:#1e293b}.danger{background:#fee2e2;color:#991b1b}.small{padding:7px 10px;font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.hint{font-size:13px;color:#64748b;line-height:1.5}.message{margin-top:10px;font-size:14px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.toolbar input{max-width:480px}
+.group{border:1px solid #e2e8f0;border-radius:10px;margin:12px 0;overflow:hidden;background:#fff}
+.grouphead{padding:14px 16px;background:#f8fafc;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.grouphead strong{font-size:16px}.meta{font-size:13px;color:#64748b;margin-top:4px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 12px;border-top:1px solid #e2e8f0;vertical-align:top}th{font-size:12px;color:#64748b;background:#fcfcfd}td{font-size:14px}
+.empty{padding:24px;text-align:center;color:#64748b}
+.hidden{display:none!important}
+@media(max-width:700px){body{padding:12px}.grid{grid-template-columns:1fr}h1{font-size:23px}th:nth-child(1),td:nth-child(1){min-width:130px}}
+</style>
+</head>
+<body>
+<h1>База товаров по поставщикам и филиалам</h1>
+<p class="sub">Отдельная база. Данные сохраняются в этом браузере на этом устройстве.</p>
+
+<section class="panel">
+<h2 style="margin:0 0 14px;font-size:19px">Добавить список товаров</h2>
+<div class="grid">
+  <div><label for="date">Дата</label><input id="date" placeholder="08/10/2026"></div>
+  <div><label for="branch">Филиал</label><input id="branch" placeholder="Лободы"></div>
+  <div><label for="supplier">Поставщик</label><input id="supplier" placeholder="ЕР АЙ 2012"></div>
+</div>
+<div style="margin-top:14px">
+<label for="itemsText">Текст списка товаров</label>
+<textarea id="itemsText" placeholder="Масло растительное — ящ&#10;Рис — м&#10;Гречка — м&#10;Пшено — м"></textarea>
+<p class="hint">Можно вставить весь текст сообщения, включая первую строку вида «08/10/2026 — Лободы — ЕР АЙ 2012». Товары распознаются по строкам «Название — единица».</p>
+</div>
+<div class="actions">
+<button class="primary" id="addBtn">Разобрать и сохранить</button>
+<button class="secondary" id="clearBtn">Очистить поля</button>
+</div>
+<div class="message" id="formMessage" role="status"></div>
+</section>
+
+<section class="panel">
+<div class="toolbar">
+<h2 style="margin:0;font-size:19px">Сохранённые товары</h2>
+<input id="search" placeholder="Поиск по товару, поставщику, филиалу или дате">
+</div>
+<div class="actions">
+<button class="secondary" id="exportBtn">Экспорт JSON</button>
+<label class="filebtn secondary" style="margin:0;display:inline-flex;align-items:center;gap:8px">Импорт JSON <input type="file" id="importFile" accept=".json,application/json" style="display:none"></label>
+<button class="danger" id="deleteAllBtn">Удалить всю базу</button>
+<span class="hint" id="count"></span>
+</div>
+<div id="records"></div>
+</section>
+
+<script>
+const KEY = "productSupplierBranchDB_v1";
+let records = [];
+try { records = JSON.parse(localStorage.getItem(KEY) || "[]"); if (!Array.isArray(records)) records=[]; } catch { records=[]; }
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+function save(){localStorage.setItem(KEY, JSON.stringify(records)); render();}
+function esc(s){return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function normalize(s){return String(s||"").trim().toLocaleLowerCase("ru");}
+function parseList(text, meta){
+  let date=meta.date.trim(), branch=meta.branch.trim(), supplier=meta.supplier.trim();
+  const lines=text.replace(/\r/g,"").split("\n").map(x=>x.trim()).filter(Boolean);
+  const products=[];
+  for(const line of lines){
+    // If the metadata is included in the first line, read it automatically.
+    const header=line.match(/^(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})\s*[—–-]\s*(.+?)\s*[—–-]\s*(.+)$/);
+    if(header && !/^[^—–-]+\s*[—–-]\s*[^—–-]+$/.test(line)){
+      if(!date) date=header[1].trim();
+      if(!branch) branch=header[2].trim();
+      if(!supplier) supplier=header[3].trim();
+      continue;
+    }
+    const m=line.match(/^(.+?)\s*[—–-]\s*(.+)$/);
+    if(!m) continue;
+    const name=m[1].trim(), unit=m[2].trim();
+    if(!name || !unit) continue;
+    if(/^(дата|филиал|поставщик)\s*:/i.test(name)) continue;
+    products.push({name,unit});
+  }
+  return {date,branch,supplier,products};
+}
+function addList(){
+  const parsed=parseList($("itemsText").value,{date:$("date").value,branch:$("branch").value,supplier:$("supplier").value});
+  if(!parsed.supplier || !parsed.branch){$("formMessage").textContent="Укажите поставщика и филиал (в полях или в первой строке сообщения).";return;}
+  if(!parsed.products.length){$("formMessage").textContent="Не удалось найти товары. Используйте формат «Название товара — единица».";return;}
+  const keyDate=parsed.date || "Дата не указана";
+  let group=records.find(r=>normalize(r.supplier)===normalize(parsed.supplier)&&normalize(r.branch)===normalize(parsed.branch)&&normalize(r.date)===normalize(keyDate));
+  if(!group){group={id:uid(),date:keyDate,branch:parsed.branch,supplier:parsed.supplier,products:[]};records.unshift(group);}
+  let added=0, updated=0;
+  for(const p of parsed.products){
+    const existing=group.products.find(x=>normalize(x.name)===normalize(p.name));
+    if(existing){existing.unit=p.unit;updated++;}
+    else {group.products.push({id:uid(),name:p.name,unit:p.unit});added++;}
+  }
+  save();
+  $("formMessage").textContent=`Сохранено. Новых товаров: ${added}; обновлено: ${updated}.`;
+  $("itemsText").value=""; $("date").value=""; $("branch").value=""; $("supplier").value="";
+}
+function render(){
+  const q=normalize($("search").value);
+  const filtered=records.map(g=>({...g,products:g.products.filter(p=>!q||[p.name,p.unit,g.supplier,g.branch,g.date].some(v=>normalize(v).includes(q)))}))
+    .filter(g=>g.products.length && (!q || [g.supplier,g.branch,g.date].some(v=>normalize(v).includes(q)) || g.products.length));
+  $("count").textContent=`Списков: ${records.length} · Товаров: ${records.reduce((n,g)=>n+g.products.length,0)}`;
+  if(!filtered.length){$("records").innerHTML='<div class="empty">Пока нет сохранённых товаров. Добавьте первый список выше.</div>';return;}
+  $("records").innerHTML=filtered.map(g=>`
+    <div class="group">
+      <div class="grouphead"><div><strong>${esc(g.date)} — ${esc(g.branch)} — ${esc(g.supplier)}</strong><div class="meta">${g.products.length} товаров</div></div>
+      <div class="actions" style="margin:0"><button class="secondary small" data-action="add" data-id="${g.id}">Добавить товары</button><button class="danger small" data-action="delete-group" data-id="${g.id}">Удалить список</button></div></div>
+      <table><thead><tr><th>Товар</th><th>Единица</th><th style="width:150px">Действия</th></tr></thead><tbody>
+      ${g.products.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.unit)}</td><td><button class="secondary small" data-action="edit" data-id="${g.id}" data-product="${p.id}">Изменить</button> <button class="danger small" data-action="delete" data-id="${g.id}" data-product="${p.id}">Удалить</button></td></tr>`).join("")}
+      </tbody></table>
+    </div>`).join("");
+}
+$("addBtn").addEventListener("click",addList);
+$("clearBtn").addEventListener("click",()=>{["date","branch","supplier","itemsText"].forEach(id=>$(id).value="");$("formMessage").textContent="";});
+$("search").addEventListener("input",render);
+$("records").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-action]"); if(!b)return;
+ const g=records.find(x=>x.id===b.dataset.id); if(!g)return;
+ const action=b.dataset.action;
+ if(action==="delete-group"){if(confirm(`Удалить список «${g.date} — ${g.branch} — ${g.supplier}»?`)){records=records.filter(x=>x.id!==g.id);save();}}
+ if(action==="delete"){g.products=g.products.filter(p=>p.id!==b.dataset.product);if(!g.products.length)records=records.filter(x=>x.id!==g.id);save();}
+ if(action==="edit"){
+   const p=g.products.find(x=>x.id===b.dataset.product);if(!p)return;
+   const name=prompt("Название товара:",p.name);if(name===null)return;
+   const unit=prompt("Единица:",p.unit);if(unit===null)return;
+   if(!name.trim()||!unit.trim()){alert("Название и единица не должны быть пустыми.");return;}
+   p.name=name.trim();p.unit=unit.trim();save();
+ }
+ if(action==="add"){
+   $("date").value=g.date==="Дата не указана"?"":g.date;$("branch").value=g.branch;$("supplier").value=g.supplier;
+   $("itemsText").focus();window.scrollTo({top:0,behavior:"smooth"});
+ }
+});
+$("exportBtn").addEventListener("click",()=>{
+ const blob=new Blob([JSON.stringify(records,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="база_товаров.json";a.click();URL.revokeObjectURL(url);
+});
+$("importFile").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+   const data=JSON.parse(await file.text());if(!Array.isArray(data))throw new Error("Файл должен содержать массив списков.");
+   const mode=confirm("Нажмите OK, чтобы объединить импорт с текущей базой. Нажмите Отмена, чтобы заменить текущую базу импортом.");
+   if(mode){
+     for(const incoming of data){
+       if(!incoming.supplier||!incoming.branch||!Array.isArray(incoming.products))continue;
+       let g=records.find(x=>normalize(x.supplier)===normalize(incoming.supplier)&&normalize(x.branch)===normalize(incoming.branch)&&normalize(x.date)===normalize(incoming.date));
+       if(!g){g={...incoming,id:uid(),products:[]};records.push(g);}
+       for(const p of incoming.products){if(!g.products.some(x=>normalize(x.name)===normalize(p.name)))g.products.push({...p,id:uid()});}
+     }
+   }else records=data.map(g=>({...g,id:g.id||uid(),products:(g.products||[]).map(p=>({...p,id:p.id||uid()}))}));
+   save();alert("Импорт завершён.");
+ }catch(err){alert("Не удалось импортировать файл: "+err.message);}
+ e.target.value="";
+});
+$("deleteAllBtn").addEventListener("click",()=>{if(confirm("Точно удалить все списки товаров из этой базы? Это действие нельзя отменить.")){records=[];save();}});
+render();
+</script>
+</body>
+</html>

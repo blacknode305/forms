@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+    html, body {
+        margin: 0;
+        width: 100%;
+        height: 100dvh;
+        overflow: hidden;
+    }
+    body {
+        padding: 0;
+        background: #f2f2f2;
+        font-family: Arial, sans-serif;
+        color: #111;
+    }
+    .window {
+        width: 100%;
+        height: 100dvh;
+        margin: 0;
+        background: white;
+        border: 1px solid #999;
+        display: flex;
+        flex-direction: column;
+    }
+    .title {
+        flex: 0 0 auto;
+        background: #d9eaf7;
+        border-bottom: 1px solid #999;
+        padding: 10px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+    .info {
+        flex: 0 0 auto;
+        display: flex;
+        gap: 20px;
+        padding: 8px 10px;
+        background: #eee;
+        border-bottom: 1px solid #aaa;
+        font-size: 16px;
+    }
+    .table-scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    th {
+        background: #d9d9d9;
+        border: 1px solid #999;
+        padding: 8px 5px;
+        font-size: 17px;
+    }
+    td {
+        border: 1px solid #aaa;
+        padding: 4px;
+        height: 48px;
+        font-size: 17px;
+        text-align: right;
+    }
+    th:first-child {
+        width: 44%;
+        text-align: center;
+    }
+    th:nth-child(2),
+    th:nth-child(3) {
+        width: 28%;
+    }
+    td:first-child {
+        padding-left: 8px;
+        text-align: left;
+    }
+    .quantity {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+    }
+    input {
+        width: 100%;
+        height: 40px;
+        min-width: 0;
+        border: 1px solid #777;
+        border-radius: 2px;
+        font-size: 20px;
+        text-align: center;
+        background: white;
+    }
+    select {
+        width: 75px;
+        height: 40px;
+        flex: 0 0 35px;
+        border: 1px solid #777;
+        border-radius: 2px;
+        font-size: 16px;
+        text-align: center;
+        background: white;
+    }
+    input:focus, select:focus {
+        outline: 2px solid #4a90e2;
+        background: #fffde6;
+    }
+    input:disabled, select:disabled {
+        background: #e5e5e5;
+        color: #777;
+        cursor: not-allowed;
+    }
+    .bottom {
+        flex: 0 0 auto;
+        padding: 12px;
+        border-top: 1px solid #999;
+        background: #eee;
+    }
+    button {
+        width: 100%;
+        min-height: 55px;
+        border: 1px solid #555;
+        border-radius: 3px;
+        font-size: 19px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .send {
+        background: #25D366;
+        color: white;
+        border-color: #128C7E;
+    }
+    .hint {
+        margin-top: 8px;
+        font-size: 16px;
+        color: green;
+        text-align: center;
+    }
+    #branch{
+        text-transform: uppercase;
+    }
+    @media (max-width: 600px) {
+        body {
+            padding: 0;
+        }
+        .title {
+            font-size: 18px;
+            padding: 8px;
+        }
+        .info {
+            font-size: 15px;
+            padding: 7px 8px;
+        }
+        th {
+            font-size: 15px;
+            padding: 6px 4px;
+        }
+        td {
+            font-size: 16px;
+            height: 48px;
+        }
+        input {
+            height: 42px;
+            font-size: 19px;
+        }
+        select {
+            height: 42px;
+            flex: 0 0 35px;
+            width: 65px;
+            font-size: 15px;
+        }
+        th:first-child {
+            width: 40%;
+        }
+        th:nth-child(2),
+        th:nth-child(3) {
+            width: 30%;
+        }
+        .bottom {
+            padding: 8px;
+        }
+        button {
+            min-height: 48px;
+            font-size: 17px;
+        }
+        .hint {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+    }
+</style>
+</head>
+<body>
+    <div class="window">
+        <div class="title"></div>
+        <div class="info">
+            <div><b>Филиал: <br></b><span id="branch"></span></div>
+            <div><b>Поставщик: <br></b><span id="supplier"></span></div>
+            <div><b>Дата: <br></b><span id="date"></span></div>
+        </div>
+        <div class="table-scroll">
+            <table id="productsTable">
+                <thead><tr><th>Наименование</th><th>Остаток</th><th>Заказ</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="bottom">
+            <button class="send" onclick="sendWhatsApp()">ОТПРАВИТЬ ОПЕРАТОРУ ЗАКАЗОВ</button>
+            <div class="hint">Заполните остаток и заказ напротив каждого товара, выбирайте единицу измерения внимательнее!</div>
+        </div>
+    </div>
+    <script>
+        const phone = "77083400580";
+        const branch = "Горняк";
+        const supplier = "ADALPRODUCT";
+        const dd = "Пятница" + " — " + "Понедельник";
+        const units = [ "м", "в", "б", "кг", "уп", "шт", "ящ", "кор" ];
+        const products = [
+            // { name: "TEMP",                 unit: "TEMP"  },
+            
+            { name: "Сыр Сметанковый",      unit: "ящ"  },
+            { name: "Сыр Чиз",              unit: "в"   },
+        ];
+        const days = [ "Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота" ];
+        const now = new Date();
+        const day = days[now.getDay()];
+        document.title = `${day} — ${branch}`;
+        document.querySelector(".title").textContent = `Заказ товаров — ${day}`;
+        document.querySelector("#branch").textContent = branch;
+        document.querySelector("#supplier").textContent = supplier;
+        /* ======= СОЗДАНИЕ ТАБЛИЦЫ ======= */
+        function renderProducts() {
+            const tbody = document.querySelector("#productsTable tbody");
+            tbody.innerHTML = products.map(product => {
+                const unitOptions = units.map(unit => {
+                            return `
+                                <option
+                                    value="${unit}"
+                                    ${unit === product.unit
+                                        ? "selected"
+                                        : ""}
+                                >
+                                    ${unit}
+                                </option>
+                            `;
+
+                        }).join("");
+
+
+                    return `
+
+                        <tr
+                            data-product="${product.name}"
+                        >
+
+                            <td>
+                                ${product.name}
+                            </td>
+
+
+                            <td>
+
+                                <div class="quantity">
+
+                                    <input
+                                        type="text"
+                                        inputmode="decimal"
+                                        class="stock-input"
+                                    >
+
+                                    <select
+                                        class="stock-unit"
+                                    >
+                                        ${unitOptions}
+                                    </select>
+
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                <div class="quantity">
+
+                                    <input
+                                        type="text"
+                                        inputmode="decimal"
+                                        class="order-input"
+                                    >
+
+                                    <select
+                                        class="order-unit"
+                                    >
+                                        ${unitOptions}
+                                    </select>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }).join("");
+
+        }
+        renderProducts();
+        /* ======= ДАТА ======= */
+        function getDate() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, "0");
+            const month = String(now.getMonth() + 1).padStart(2, "0");
+            const year = now.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        document.getElementById("date").textContent = getDate();
+        /* ======= ПРЕОБРАЗОВАНИЕ ЗНАЧЕНИЯ ======= */
+        function getValue(input) {
+            let value = input.value.trim();
+            /* Пустое значение = 0 */
+            if (value === "") { return 0; }
+            /* Дефис = - */
+            if (value === "-") { return "-"; }
+            /* Запятая превращается в точку для Number() */
+            value = value.replace(",", ".");
+            const number = Number(value);
+            if (Number.isNaN(number)) { return 0; }
+            return number;
+        }
+        /* ======= ЗАМЕНА ТОЧКИ НА ЗАПЯТУЮ ======= */
+        document.querySelector("#productsTable tbody").addEventListener("input", function(e) {
+            /* Автоматически меняем . на , */
+            if (e.target.classList.contains("stock-input") || e.target.classList.contains("order-input")) {
+                const position = e.target.selectionStart;
+                const oldValue = e.target.value;
+                const newValue = oldValue.replace(/\./g, ",");
+                if (oldValue !== newValue) {
+                    e.target.value = newValue;
+                    /* Возвращаем курсор */
+                    try {
+                        e.target.setSelectionRange(position, position);
+                    } catch (error) {}
+                }
+            }
+            /* Логика остатка */
+            if (!e.target.classList.contains("stock-input")) { return; }
+            const row = e.target.closest("tr");
+            const stockInput = row.querySelector(".stock-input");
+            const orderInput = row.querySelector(".order-input");
+            const orderUnit = row.querySelector(".order-unit");
+            const value = stockInput.value.trim();
+            /* Остаток "-" → заказ "-" → блокируем заказ */
+            if (value === "-") {
+                orderInput.value = "-";
+                orderInput.disabled = true;
+                orderUnit.disabled = true;
+                return;
+            }
+            /* Если остаток снова число, разблокируем заказ */
+            orderInput.disabled = false;
+            orderUnit.disabled = false;
+            /* Если ранее заказ был "-", возвращаем его в 0 */
+            if ( orderInput.value.trim() === "-") { 
+                orderInput.value = "0";
+            }
+        });
+        /* ======= СОЗДАНИЕ ТЕКСТА WHATSAPP ======= */
+        function createTSV() {
+            const date = getDate();
+            let lines = [];
+            /* Первая строка */
+            lines.push(date + " — " + branch + " — " + supplier + '\n' + dd + '\n');
+            /* Замена точки на запятую */
+            function formatNumber(value) {
+                if (value === "-") { return "-"; }
+                return String(value).replace(".", ",");
+            }
+            const rows = document.querySelectorAll("#productsTable tbody tr");
+            rows.forEach(row => {
+                const product = row.dataset.product;
+                const stockInput = row.querySelector(".stock-input");
+                const stockUnit = row.querySelector(".stock-unit");
+                const orderInput = row.querySelector(".order-input");
+                const orderUnit = row.querySelector(".order-unit");
+                const stock = getValue(stockInput);
+                const order = getValue(orderInput);
+                /* Остаток "-" → товар не используется */
+                if (stock === "-") {
+                    lines.push(product + " — не используется");
+                    return;
+                }
+                /* Остаток 0 → без единицы */
+                let stockText;
+                if (stock === 0) { stockText = "0"; } 
+                else { stockText = formatNumber(stock) + "" + stockUnit.value; }
+                let orderText;
+                /* Заказ 0 → только 0 */
+                if (order === 0) { orderText = "0"; }
+                /* Заказ "-" → тоже 0 БЕЗ единицы */
+                else if (order === "-") { orderText = "0"; }
+                /* Заказ больше 0 → количество + единица */
+                else { orderText = formatNumber(order) + "" + orderUnit.value; }
+                lines.push(product + " — " + "\t" + stockText + "\t" + orderText);
+            });
+            return lines.join("\n");
+        }
+        /* ======= WHATSAPP ======= */
+        function sendWhatsApp() {
+            const text = createTSV();
+            const url = "https://wa.me/" + phone + "?text=" + encodeURIComponent(text);
+            window.open(url, "_blank");
+        }
+    </script>
+</body>
+</html>
