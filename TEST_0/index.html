@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>База поставщиков</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f3f3;font-family:Arial;color:#111}
+.app{max-width:1100px;margin:auto;background:#fff;min-height:100vh}
+header{padding:16px 20px;background:#d9eaf7;border-bottom:1px solid #999}
+h1,h2{margin:0}h1{font-size:23px}h2{font-size:19px;margin-bottom:14px}
+main{padding:18px}.card{border:1px solid #aaa;border-radius:6px;padding:16px;margin-bottom:18px}
+label{display:block;font-weight:bold;margin:10px 0 5px}
+input,textarea,button{font:inherit}input,textarea{width:100%;padding:10px;border:1px solid #888;border-radius:4px;font-size:16px}
+textarea{min-height:250px;resize:vertical;line-height:1.4}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+button{padding:9px 14px;border:1px solid #666;border-radius:4px;font-weight:bold;cursor:pointer}
+.primary{background:#25d366;color:#fff;border-color:#128c7e}.danger{background:#f8dada}.secondary{background:#eee}
+.msg{display:none;margin-top:10px;padding:10px;border-radius:4px}.ok{display:block;background:#e2f5e8;color:#176b31}.err{display:block;background:#fbe2e2;color:#8b2020}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.stat{padding:9px 12px;border:1px solid #bbb;border-radius:5px;background:#f7f7f7}
+.supplier{border:1px solid #aaa;border-radius:6px;margin-bottom:12px;overflow:hidden}
+.shead{padding:11px 13px;background:#e9e9e9;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px}.shead:hover{background:#dfebf4}.shead-main{flex:1;min-width:0}.toggle-hint{font-size:12px;color:#555;font-weight:normal;margin-top:4px}
+.sname{font-size:18px;font-weight:bold}.branch{padding:11px 13px;border-top:1px solid #ddd}
+.bname{font-weight:bold}.info{display:flex;gap:25px;flex-wrap:wrap;margin-top:5px}.note{color:#555;margin-top:5px;font-size:14px}
+.small{padding:5px 9px;font-size:12px}.empty{text-align:center;color:#777;padding:25px}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>База поставщиков и графиков</h1></header>
+<main>
+<section class="card">
+<h2>Добавить сообщение поставщика</h2>
+<label>Название поставщика</label>
+<input id="supplier" placeholder="Например: RPV-TRADE">
+<label>Контактное лицо</label>
+<input id="contact" placeholder="Например: Иван Иванов">
+<label>Телефон</label>
+<input id="phone" type="tel" placeholder="Например: +7 777 123-45-67">
+<label>Сообщение</label>
+<textarea id="messageText" placeholder="Вставьте сюда письмо поставщика..."></textarea>
+<div class="actions">
+<button class="primary" onclick="addMessage()">＋ ДОБАВИТЬ В БАЗУ</button>
+<button class="secondary" onclick="clearForm()">Очистить</button>
+<span class="secondary" style="padding:9px 12px;border-radius:4px">Общий экспорт базы — в Оптиме</span>
+</div>
+<div id="msg" class="msg"></div>
+</section>
+
+<section class="card">
+<h2>Результат</h2>
+<div class="stats">
+<div class="stat">Поставщиков: <b id="sc">0</b></div>
+<div class="stat">Филиалов: <b id="bc">0</b></div>
+</div>
+<div id="list"></div>
+<button class="danger" onclick="clearDB()">Очистить всю базу</button>
+</section>
+</main>
+</div>
+
+<script>
+const KEY="optimaOrderSystem_v1";
+const SEED_SUPPLIERS=[{"name":"VICI-KAZAKHSTAN (ВИЧИ-КАЗАХСТАН)","contact":"Кирилл","phone":"+77018077424","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Вт","delivery":"Чт","note":"Вторник заявка до 12.00"},{"branch":"НУРКЕН","order":"Пн, Вт","delivery":"Чт","note":"Вторник заявка до 12.00"},{"branch":"ПРИШАХТИНСК","order":"Пн, Вт","delivery":"Чт","note":"Вторник заявка до 12.00"},{"branch":"ГОРНЯК","order":"Чт, Пт","delivery":"Вт","note":"Птяница заявка до 12.00"},{"branch":"САРАНЬ","order":"Пн, Вт","delivery":"Чт","note":"Вторник заявка до 12.00"}],"id":"sup_1"},{"name":"RPV-TRADE (РПВ-ТРЭЙД)","contact":"","phone":"+7 708 529 8947","schedules":[{"branch":"ЛОБОДЫ","order":"Пт","delivery":"Вт","note":"Поставка через день ,город можно вне графика,поставки осуществляются один раз в неделю"},{"branch":"НУРКЕН","order":"Вт","delivery":"Чт","note":"Поставка через день ,город можно вне графика,поставки осуществляются один раз в неделю"},{"branch":"ПРИШАХТИНСК","order":"Пн","delivery":"Ср","note":"Поставка через день ,город можно вне графика,поставки осуществляются один раз в неделю"},{"branch":"ГОРНЯК","order":"Пт","delivery":"Вт","note":"Поставка через день ,город можно вне графика,поставки осуществляются один раз в неделю"},{"branch":"САРАНЬ","order":"Вт","delivery":"Чт","note":"Поставка через день ,город можно вне графика,поставки осуществляются один раз в неделю"}],"id":"sup_2"},{"name":"КОНДИТЕРСНАБ","contact":"","phone":"+77013019543","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Чт","delivery":"Пн, Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Пн, Чт","delivery":"Пн, Пт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Ср","delivery":"Чт","note":"не указано"},{"branch":"ГОРНЯК","order":"Ср","delivery":"Чт","note":"не указано"},{"branch":"САРАНЬ","order":"Пн","delivery":"Вт","note":"не указано"}],"id":"sup_3"},{"name":"АЛЕКСЕЕВА","contact":"","phone":"","schedules":[{"branch":"ЛОБОДЫ","order":"Пн","delivery":"Вт","note":"не указано"},{"branch":"НУРКЕН","order":"Пн","delivery":"Пн, Вт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Пн","delivery":"Вт, Ср","note":"не указано"},{"branch":"ГОРНЯК","order":"Пн","delivery":"Ср","note":"не указано"},{"branch":"САРАНЬ","order":"Пн","delivery":"Чт","note":"не указано"}],"id":"sup_4"},{"name":"КУРОЧКА РЯБА","contact":"Марина","phone":"+7 777 109 5149","schedules":[{"branch":"ЛОБОДЫ","order":"Вт, Пт","delivery":"Ср, Сб","note":"Отгрузка на следующий день"},{"branch":"НУРКЕН","order":"Пн, Чт","delivery":"Вт, Пт","note":"Отгрузка на следующий день"},{"branch":"ПРИШАХТИНСК","order":"Пн, Чт","delivery":"Вт, Пт","note":"Отгрузка на следующий день"},{"branch":"ГОРНЯК","order":"Пн, Чт","delivery":"Вт, Пт","note":"Отгрузка на следующий день"},{"branch":"САРАНЬ","order":"Пн, Чт","delivery":"Вт, Пт","note":"Отгрузка на следующий день"}],"id":"sup_5"},{"name":"ADALPRODUCT (АДАЛПРОДУКТ)","contact":"Сергей","phone":"+7 775 320 8878","schedules":[{"branch":"ЛОБОДЫ","order":"Ср","delivery":"Чт","note":"Каждую неделю"},{"branch":"НУРКЕН","order":"Вс","delivery":"Пн","note":"Каждую неделю"},{"branch":"ПРИШАХТИНСК","order":"Ср","delivery":"Чт","note":"Каждую неделю"},{"branch":"ГОРНЯК","order":"Пт, Вс","delivery":"Пн","note":"Каждую неделю"},{"branch":"САРАНЬ","order":"Пн","delivery":"Вт","note":"Каждую неделю"}],"id":"sup_6"},{"name":"ЕР АЙ 2012","contact":"Баян","phone":"+7 707 109 2017","schedules":[{"branch":"ЛОБОДЫ","order":"Чт","delivery":"Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Пт","delivery":"Сб","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Вт","delivery":"Ср","note":"2 раза в месяц"},{"branch":"ГОРНЯК","order":"Пн","delivery":"Вт","note":"не указано"},{"branch":"САРАНЬ","order":"Пт","delivery":"Сб","note":"не указано"}],"id":"sup_7"},{"name":"EURASIAN FOODS (ЕВРАЗИАН ФУДС)","contact":"","phone":"+7 702 860 7410","schedules":[{"branch":"ЛОБОДЫ","order":"Ср, Чт","delivery":"Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Чт, Пт","delivery":"Пн","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Пн","delivery":"Ср","note":"не указано"},{"branch":"ГОРНЯК","order":"Пн","delivery":"Ср","note":"не указано"},{"branch":"САРАНЬ","order":"Чт, Пт","delivery":"Пн","note":"не указано"}],"id":"sup_8"},{"name":"АЛМАС-2000","contact":"Евгения","phone":"+7 778 736 4936","schedules":[{"branch":"ЛОБОДЫ","order":"Ср","delivery":"Чт","note":"Отгрузка на следующий день, каждую неделю"},{"branch":"НУРКЕН","order":"Пт","delivery":"Пн","note":"Отгрузка через 2 дня, каждую неделю"},{"branch":"ПРИШАХТИНСК","order":"Вт","delivery":"Ср","note":"Отгрузка на следующий день, каждую неделю"},{"branch":"ГОРНЯК","order":"Пт","delivery":"Пн","note":"Отгрузка через 2 дня, каждую неделю"},{"branch":"САРАНЬ","order":"Пт","delivery":"Пн","note":"Отгрузка через 2 дня, каждую неделю"}],"id":"sup_9"},{"name":"VIVAT СЕРИКОВ (ВИВАТ СЕРИКОВ)","contact":"Елена","phone":"+7 700 759 0629","schedules":[{"branch":"ЛОБОДЫ","order":"Вс, Пн, Вт, Ср, Чт","delivery":"Пн, Вт, Ср, Чт, Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Вс, Пн, Вт, Ср, Чт","delivery":"Пн, Вт, Ср, Чт, Пт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Вс, Пн, Вт, Ср, Чт","delivery":"Пн, Вт, Ср, Чт, Пт","note":"не указано"},{"branch":"ГОРНЯК","order":"Вс, Пн, Вт, Ср, Чт","delivery":"Пн, Вт, Ср, Чт, Пт","note":"не указано"},{"branch":"САРАНЬ","order":"Ср","delivery":"Чт","note":"1 раз в неделю"}],"id":"sup_10"},{"name":"НАТИЖЕ","contact":"Лаура","phone":"+7 708 133 5838","schedules":[{"branch":"ЛОБОДЫ","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"НУРКЕН","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"ГОРНЯК","order":"Пн, Ср, Пт","delivery":"Вт, Чт, Сб","note":"не указано"},{"branch":"САРАНЬ","order":"не указано","delivery":"не указано","note":"не указано"}],"id":"sup_11"},{"name":"ТАБЫС","contact":"Елена","phone":"+7 747 695 6325","schedules":[{"branch":"ЛОБОДЫ","order":"Вт","delivery":"Ср","note":"не указано"},{"branch":"НУРКЕН","order":"Пт","delivery":"Пн","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Ср","delivery":"Чт","note":"не указано"},{"branch":"ГОРНЯК","order":"Пт","delivery":"Пн","note":"не указано"},{"branch":"САРАНЬ","order":"Пн, Ср","delivery":"Вт, Чт","note":"не указано"}],"id":"sup_12"},{"name":"ROKOS (РОКОС)","contact":"","phone":"+7 776 407 5407","schedules":[{"branch":"ЛОБОДЫ","order":"Чт, Сб","delivery":"Пн, Чт","note":"Отгрузка осуществляется через один день."},{"branch":"НУРКЕН","order":"Чт, Сб","delivery":"Пн, Чт","note":"Отгрузка осуществляется через один день."},{"branch":"ПРИШАХТИНСК","order":"Пт","delivery":"Вт","note":"Отгрузка осуществляется через один день."},{"branch":"ГОРНЯК","order":"Ср","delivery":"Пт","note":"Отгрузка осуществляется через один день."},{"branch":"САРАНЬ","order":"Вт","delivery":"Чт","note":"Отгрузка осуществляется через один день."}],"id":"sup_13"},{"name":"BEST MILL (БЕСТ МИЛЛ)","contact":"","phone":"+7 776 388 8336","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Вт, Ср, Чт, Пт","delivery":"Вт, Пт","note":"Заявка на товар может быть направленна Покупателем в любом удобный день, окончательная корректировка по возможности не позднее чем за 24 часа до поставки."},{"branch":"НУРКЕН","order":"Пн, Вт, Ср, Чт, Пт","delivery":"Пн, Чт","note":"Заявка на товар может быть направленна Покупателем в любом удобный день, окончательная корректировка по возможности не позднее чем за 24 часа до поставки."},{"branch":"ПРИШАХТИНСК","order":"Пн, Вт, Ср, Чт, Пт","delivery":"Пт","note":"Заявка на товар может быть направленна Покупателем в любом удобный день, окончательная корректировка по возможности не позднее чем за 24 часа до поставки."},{"branch":"ГОРНЯК","order":"Пн, Вт, Ср, Чт, Пт","delivery":"Вт","note":"Заявка на товар может быть направленна Покупателем в любом удобный день, окончательная корректировка по возможности не позднее чем за 24 часа до поставки."},{"branch":"САРАНЬ","order":"Пн, Вт, Ср, Чт, Пт","delivery":"Вт","note":"Заявка на товар может быть направленна Покупателем в любом удобный день, окончательная корректировка по возможности не позднее чем за 24 часа до поставки."}],"id":"sup_14"},{"name":"САМАЛ КОМПАНИ","contact":"Евгения","phone":"+7 775 633 2173","schedules":[{"branch":"ЛОБОДЫ","order":"Пн","delivery":"Пн","note":"Отгрузка день в день"},{"branch":"НУРКЕН","order":"Пн, Чт","delivery":"Пн, Чт","note":"Отгрузка день в день"},{"branch":"ПРИШАХТИНСК","order":"Ср","delivery":"Ср","note":"Отгрузка день в день"},{"branch":"ГОРНЯК","order":"Ср","delivery":"Ср","note":"Отгрузка день в день"},{"branch":"САРАНЬ","order":"Пн, Чт","delivery":"Пн, Чт","note":"Отгрузка день в день"}],"id":"sup_15"},{"name":"ЦКТ ЦЕНТР","contact":"Елена","phone":"+7 700 903 4415","schedules":[{"branch":"ЛОБОДЫ","order":"Пн","delivery":"Пн","note":"Отгрузка день в день, каждый понедельник месяца"},{"branch":"НУРКЕН","order":"Пн","delivery":"Пн","note":"Отгрузка день в день 2-3 раза в месяц"},{"branch":"ПРИШАХТИНСК","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"ГОРНЯК","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"САРАНЬ","order":"не указано","delivery":"не указано","note":"не указано"}],"id":"sup_16"},{"name":"КАЗЬМИНА","contact":"Галина","phone":"+7 778 236 0333","schedules":[{"branch":"ЛОБОДЫ","order":"Пн","delivery":"Вт","note":"Отгрузку осуществляем на следующий день. вне графика также можем отгрузить"},{"branch":"НУРКЕН","order":"Пн","delivery":"Пн","note":"Отгрузку осуществляем в день заявки. вне графика также можем отгрузить"},{"branch":"ПРИШАХТИНСК","order":"Пн","delivery":"Ср","note":"2 раза в месяц, через неделю"},{"branch":"ГОРНЯК","order":"Пн","delivery":"Пн","note":"2 раза в месяц, через неделю"},{"branch":"САРАНЬ","order":"Пн","delivery":"Вт","note":"2 раза в месяц, через неделю"}],"id":"sup_17"},{"name":"БАЛИ 2009","contact":"","phone":"+7 701 801 8175","schedules":[{"branch":"ЛОБОДЫ","order":"Пн","delivery":"Вт","note":"Через неделю"},{"branch":"НУРКЕН","order":"Вт","delivery":"Ср","note":"Через неделю"},{"branch":"ПРИШАХТИНСК","order":"Вт","delivery":"Чт","note":"Через неделю"},{"branch":"ГОРНЯК","order":"Вт","delivery":"Ср","note":"Через неделю"},{"branch":"САРАНЬ","order":"Вт","delivery":"Ср","note":"Через неделю"}],"id":"sup_18"},{"name":"DEDOV (ДЕДОВ)","contact":"","phone":"+7 705 793 0606","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Вт, Ср, Чт, Пт, Вс","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"Отгрузка осуществляется на следующий день"},{"branch":"НУРКЕН","order":"Пн, Вт, Ср, Чт, Пт, Вс","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"Отгрузка осуществляется на следующий день"},{"branch":"ПРИШАХТИНСК","order":"Пн, Вт, Ср, Чт, Пт, Вс","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"Отгрузка осуществляется на следующий день на Нуркена  Абдирова 44/1"},{"branch":"ГОРНЯК","order":"Чт, Вс","delivery":"Пн, Пт","note":"Отгрузка осуществляется на следующий день"},{"branch":"САРАНЬ","order":"Пн, Вт, Ср, Чт, Пт, Вс","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"Отгрузка осуществляется на следующий день на Нуркена Абдирова 44/1"}],"id":"sup_19"},{"name":"ЧЖАН KZ (ЧИЖАН КЗ)","contact":"Валентина","phone":"+7 701 770 5339","schedules":[{"branch":"ЛОБОДЫ","order":"Ср","delivery":"Пт","note":"Отгрузка раз в неделю"},{"branch":"НУРКЕН","order":"Ср","delivery":"Сб","note":"Отгрузка раз в неделю"},{"branch":"ПРИШАХТИНСК","order":"Пн","delivery":"Ср","note":"Отгрузка раз в неделю"},{"branch":"ГОРНЯК","order":"Пн","delivery":"Ср","note":"Отгрузка раз в неделю"},{"branch":"САРАНЬ","order":"Ср","delivery":"Пт","note":"Отгрузка раз в неделю"}],"id":"sup_20"},{"name":"ИРБИС-2016","contact":"","phone":"+7 708 764 5188","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Вт, Ср, Чт","delivery":"Вт, Ср, Чт, Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Пн, Вт, Ср, Чт","delivery":"Вт, Ср, Чт, Пт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Пн","delivery":"Вт","note":"не указано"},{"branch":"ГОРНЯК","order":"Пн, Вт, Чт","delivery":"Ср, Пт","note":"не указано"},{"branch":"САРАНЬ","order":"Пн, Вт, Ср","delivery":"Чт","note":"не указано"}],"id":"sup_21"},{"name":"КОЛОС","contact":"Влад","phone":"+7 700 470 0740","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Чт","delivery":"Вс","note":"Отправим дозаявку в любой день при необходимости кроме субботы и воскресенья. Доставка с Алматы 1-2 дня."},{"branch":"НУРКЕН","order":"Пн, Чт","delivery":"Ср, Вс","note":"Отправим дозаявку в любой день при необходимости кроме субботы и воскресенья. Доставка с Алматы 1-2 дня."},{"branch":"ПРИШАХТИНСК","order":"Пн, Чт","delivery":"Ср, Вс","note":"Отправим дозаявку в любой день при необходимости кроме субботы и воскресенья. Доставка с Алматы 1-2 дня."},{"branch":"ГОРНЯК","order":"Пн, Чт","delivery":"Ср, Вс","note":"Отправим дозаявку в любой день при необходимости кроме субботы и воскресенья. Доставка с Алматы 1-2 дня."},{"branch":"САРАНЬ","order":"Пн, Чт","delivery":"Ср, Вс","note":"Отправим дозаявку в любой день при необходимости кроме субботы и воскресенья. Доставка с Алматы 1-2 дня."}],"id":"sup_22"},{"name":"KARAVAN (КАРАВАН)","contact":"Раиса","phone":"+7 708 106 0894","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Вт, Ср, Чт, Пт, Вс","delivery":"Пн, Вт, Ср, Чт, Пт","note":"заявки до 17.00 воскресенье заявка в понедельник доставка. и так каждый день ."},{"branch":"НУРКЕН","order":"Пн, Вт, Ср, Чт, Пт, Вс","delivery":"Пн, Вт, Ср, Чт, Пт","note":"заявки до 17.00 воскресенье заявка в понедельник доставка. и так каждый день ."},{"branch":"ПРИШАХТИНСК","order":"Ср, Вс","delivery":"Пн, Чт","note":"2 раза в неделю доставка"},{"branch":"ГОРНЯК","order":"Пн, Вт, Ср, Чт, Пт, Вс","delivery":"Пн, Вт, Ср, Чт, Пт","note":"заявки до 17.00 воскресенье заявка в понедельник доставка. и так каждый день ."},{"branch":"САРАНЬ","order":"Пн, Чт","delivery":"Вт, Пт","note":"2 раза в неделю доставка"}],"id":"sup_23"},{"name":"FORT LIFE KZ (ФОРТ ЛАЙФ КЗ)","contact":"Николай","phone":"+7 700 302 6485","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Чт","delivery":"Вт, Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Пн, Чт","delivery":"Вт, Пт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Вт","delivery":"Ср","note":"не указано"},{"branch":"ГОРНЯК","order":"Чт","delivery":"Пт","note":"не указано"},{"branch":"САРАНЬ","order":"Чт","delivery":"Пт","note":"не указано"}],"id":"sup_24"},{"name":"FOOD GROUP-K (ФУД ГРУПП-К)","contact":"","phone":"+7778 658 00 88","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Чт","delivery":"Пн, Чт","note":"заявку принимаем до 11:00"},{"branch":"НУРКЕН","order":"Пн, Чт","delivery":"Пн, Чт","note":"заявку принимаем до 11:00"},{"branch":"ПРИШАХТИНСК","order":"Пн, Вт","delivery":"Ср","note":"1 раз в неделю"},{"branch":"ГОРНЯК","order":"Пн, Вт","delivery":"Ср","note":"1 раз в неделю"},{"branch":"САРАНЬ","order":"Пн, Вт","delivery":"Вт","note":"1 раз в неделю"}],"id":"sup_25"},{"name":"АЛИ - 2011","contact":"Айгерим","phone":"+7 707 371 7046","schedules":[{"branch":"ЛОБОДЫ","order":"Вт, Чт, Вс","delivery":"Пн, Ср, Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Вт, Чт, Вс","delivery":"Пн, Ср, Пт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Вт, Чт, Вс","delivery":"Пн, Ср, Пт","note":"не указано"},{"branch":"ГОРНЯК","order":"Вт, Чт, Вс","delivery":"Пн, Ср, Пт","note":"не указано"},{"branch":"САРАНЬ","order":"Вт, Чт, Вс","delivery":"Пн, Ср, Пт","note":"не указано"}],"id":"sup_26"},{"name":"REN-MILK (РЕН-МИЛК)","contact":"Денис","phone":"+7 701 730 2960","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Вт, Ср, Чт, Пт, Сб","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"отгрузку осуществляем на 2ой день после подачи заявки"},{"branch":"НУРКЕН","order":"Пн, Вт, Ср, Чт, Пт, Сб","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"отгрузку осуществляем на 2ой день после подачи заявки"},{"branch":"ПРИШАХТИНСК","order":"Пн, Вт, Ср, Чт, Пт, Сб","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"отгрузку осуществляем на 2ой день после подачи заявки"},{"branch":"ГОРНЯК","order":"Пн, Вт, Ср, Чт, Пт, Сб","delivery":"Пн, Вт, Ср, Чт, Пт, Сб","note":"отгрузку осуществляем на 2ой день после подачи заявки"},{"branch":"САРАНЬ","order":"Пн, Ср, Чт, Сб","delivery":"Пн, Ср, Пт, Сб","note":"отгрузку осуществляем на 2ой день после подачи заявки"}],"id":"sup_27"},{"name":"MILK&MEAT (МИЛКМИТ)","contact":"Динара","phone":"+7 701 427 2135","schedules":[{"branch":"ЛОБОДЫ","order":"Вт, Чт, Вс","delivery":"Пн, Ср, Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Вт, Чт, Вс","delivery":"Пн, Ср, Пт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Ср, Вс","delivery":"Пн, Чт","note":"не указано"},{"branch":"ГОРНЯК","order":"Ср, Вс","delivery":"Пн, Чт","note":"не указано"},{"branch":"САРАНЬ","order":"Вт, Чт","delivery":"Ср, Пт","note":"не указано"}],"id":"sup_28"},{"name":"МЕЦГЕР","contact":"Антон","phone":"+7 777 773 2803","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Чт","delivery":"Вт, Пт","note":"не указано"},{"branch":"НУРКЕН","order":"Пн, Чт","delivery":"Вт, Пт","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Пн, Чт","delivery":"Вт, Пт","note":"не указано"},{"branch":"ГОРНЯК","order":"Пн, Чт","delivery":"Вт, Пт","note":"не указано"},{"branch":"САРАНЬ","order":"Пн, Чт","delivery":"Вт, Пт","note":"не указано"}],"id":"sup_29"},{"name":"ЭТАЛОН","contact":"Алишер","phone":"+7 777 161 2020","schedules":[{"branch":"ЛОБОДЫ","order":"Пн, Ср","delivery":"Вт, Чт","note":"каждую неделю"},{"branch":"НУРКЕН","order":"Пн, Ср","delivery":"Вт, Чт","note":"каждую неделю"},{"branch":"ПРИШАХТИНСК","order":"Пт","delivery":"Пн","note":"не указано"},{"branch":"ГОРНЯК","order":"Ср","delivery":"Чт","note":"не указано"},{"branch":"САРАНЬ","order":"Пн","delivery":"Пт","note":"не указано"}],"id":"sup_30"},{"name":"BAYSAN (БАЙСАН)","contact":"Максим","phone":"+7 708 959 7117","schedules":[{"branch":"ЛОБОДЫ","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"НУРКЕН","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"ГОРНЯК","order":"не указано","delivery":"не указано","note":"не указано"},{"branch":"САРАНЬ","order":"не указано","delivery":"не указано","note":"не указано"}],"id":"sup_31"},{"name":"ГУРМИКС","contact":"","phone":"","schedules":[{"branch":"ЛОБОДЫ","order":"Пт","delivery":"Пн","note":"не указано"},{"branch":"НУРКЕН","order":"Пт","delivery":"Пн","note":"не указано"},{"branch":"ПРИШАХТИНСК","order":"Пт","delivery":"Пн","note":"не указано"},{"branch":"ГОРНЯК","order":"Пт","delivery":"Пн","note":"не указано"},{"branch":"САРАНЬ","order":"Пт","delivery":"Пн","note":"не указано"}],"id":"sup_32"}];
+function norm(v){return String(v??'').toLocaleLowerCase('ru').trim()}
+function getMaster(){
+  try{const x=JSON.parse(localStorage.getItem(KEY));if(x&&typeof x==='object'&&Array.isArray(x.suppliers)&&Array.isArray(x.products)&&Array.isArray(x.links))return x;}catch(e){}
+  let suppliers=structuredClone(SEED_SUPPLIERS);
+  try{const old=JSON.parse(localStorage.getItem('supplierDB_v1')||'[]');if(Array.isArray(old))for(const s of old){const i=suppliers.findIndex(x=>norm(x.name)===norm(s.name));if(i>=0)suppliers[i]={...suppliers[i],...s,id:s.id||suppliers[i].id};else suppliers.push({...s,id:s.id||('sup_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6))});}}catch(e){}
+  return {branches:['ГОРНЯК','ЛОБОДЫ','НУРКЕН','ПРИШАХТИНСК','САРАНЬ'],suppliers,products:[],links:[],requests:[]};
+}
+let master=getMaster();let db=master.suppliers;const openedSuppliers=new Set();
+function save(){try{const fresh=JSON.parse(localStorage.getItem(KEY)||'null');if(fresh&&Array.isArray(fresh.products)&&Array.isArray(fresh.links))master=fresh;}catch(e){}master.suppliers=db;localStorage.setItem(KEY,JSON.stringify(master));}
+
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+function parse(text){
+ const out=[];
+ // Убираем маркеры WhatsApp/Markdown, например *ЛОБОДЫ* или _НУРКЕН_.
+ const lines=text.replace(/\r/g,"").split("\n").map(x=>x.trim().replace(/^[*_`]+|[*_`]+$/g,"").trim());
+ let current=null;
+ for(let i=0;i<lines.length;i++){
+   const line=lines[i];
+   if(!line) continue;
+   let m=line.match(/^День\s+заявки\s*:\s*(.*)$/i);
+   if(m && current){ current.order=m[1].trim() || "не указано"; continue; }
+   m=line.match(/^День\s+поставки\s*:\s*(.*)$/i);
+   if(m && current){ current.delivery=m[1].trim() || "не указано"; continue; }
+   m=line.match(/^Примечание\s*:\s*(.*)$/i);
+   if(m && current){ current.note=m[1].trim() || "не указано"; continue; }
+
+   // Название филиала может быть выделено звёздочками и отделено пустыми строками.
+   if(/^[А-ЯЁA-Z0-9][А-ЯЁA-Z0-9\s-]*$/i.test(line) &&
+      !/^(ЗДРАВСТВУЙТЕ|СПАСИБО|ПРИВЕТ|ДОБРЫЙ ДЕНЬ|С УВАЖЕНИЕМ)$/i.test(line)){
+      let j=i+1;
+      while(j<lines.length && !lines[j]) j++;
+      if(j<lines.length && /^День\s+заявки\s*:/i.test(lines[j])){
+        current={branch:line.replace(/\s+/g," ").trim(),order:"",delivery:"",note:""};
+        out.push(current);
+      }
+   }
+ }
+ // «не указано» — допустимое значение: блок филиала всё равно сохраняем.
+ return out.filter(r=>r.order!=="" && r.delivery!=="");
+}
+function addMessage(){
+ const name=document.getElementById("supplier").value.trim();
+ const contact=document.getElementById("contact").value.trim();
+ const phone=document.getElementById("phone").value.trim();
+ const text=document.getElementById("messageText").value.trim();
+ if(!name)return show("Введите название поставщика.","err");
+ if(!text)return show("Вставьте сообщение.","err");
+ const rows=parse(text);
+ if(!rows.length)return show("Не нашёл блоки филиалов. Нужны строки «День заявки» и «День поставки».","err");
+
+ let s=db.find(x=>x.name.toLowerCase()===name.toLowerCase());
+ if(!s){s={name,contact,phone,schedules:[]};db.push(s)}
+ else {
+   s.contact=contact;
+   s.phone=phone;
+ }
+ let added=0,updated=0;
+ rows.forEach(r=>{
+   const old=s.schedules.find(x=>x.branch.toLowerCase()===r.branch.toLowerCase());
+   if(old){Object.assign(old,r);updated++}
+   else{s.schedules.push(r);added++}
+ });
+ save();render();
+ clearForm();
+ show("Поставщик «"+name+"»: добавлено "+added+", обновлено "+updated+". Поля очищены.","ok");
+}
+
+function show(t,c){const e=document.getElementById("msg");e.textContent=t;e.className="msg "+c}
+function clearForm(){
+ document.getElementById("supplier").value="";
+ document.getElementById("contact").value="";
+ document.getElementById("phone").value="";
+ document.getElementById("messageText").value="";
+}
+
+function render(){
+ document.getElementById("sc").textContent=db.length;
+ document.getElementById("bc").textContent=db.reduce((n,s)=>n+s.schedules.length,0)/db.length;
+ const list=document.getElementById("list");
+ if(!db.length){list.innerHTML='<div class="empty">База пока пустая.</div>';return}
+ list.innerHTML=db.map((s,si)=>{
+ const opened=openedSuppliers.has(si);
+ return `
+ <div class="supplier">
+  <div class="shead" onclick="toggleSupplier(${si})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSupplier(${si})}">
+   <div class="shead-main">
+    <div class="sname">${opened?'▾':'▸'} ${esc(s.name)}</div>
+    <div class="toggle-hint">${opened?'Нажмите, чтобы скрыть информацию':'Нажмите, чтобы открыть информацию'}</div>
+   </div>
+   <button class="small danger" onclick="event.stopPropagation();delSupplier(${si})">Удалить</button>
+  </div>
+  ${opened?`<div class="supplier-content">
+   ${s.contact||s.phone?`<div class="branch"><div class="info">${s.contact?`<div><b>Контактное лицо:</b> ${esc(s.contact)}</div>`:''}${s.phone?`<div><b>Телефон:</b> ${esc(s.phone)}</div>`:''}</div></div>`:''}
+   ${s.schedules.map((r,ri)=>`
+    <div class="branch">
+     <div class="bname">${esc(r.branch)}</div>
+     <div class="info"><div><b>День заявки:</b> ${esc(r.order)}</div><div><b>День поставки:</b> ${esc(r.delivery)}</div></div>
+     ${r.note?`<div class="note"><b>Примечание:</b> ${esc(r.note)}</div>`:""}
+     <div class="actions">
+      <button class="small secondary" onclick="editRow(${si},${ri})">Изменить</button>
+      <button class="small danger" onclick="delRow(${si},${ri})">Удалить</button>
+     </div>
+    </div>`).join("")}
+  </div>`:''}
+ </div>`;
+ }).join("");
+}
+
+function toggleSupplier(si){
+ if(openedSuppliers.has(si))openedSuppliers.delete(si);else openedSuppliers.add(si);
+ render();
+}
+
+function editRow(si,ri){
+ const r=db[si].schedules[ri];
+ const branch=prompt("Филиал:",r.branch);if(branch===null)return;
+ const order=prompt("Дни заявки:",r.order);if(order===null)return;
+ const delivery=prompt("Дни поставки:",r.delivery);if(delivery===null)return;
+ const note=prompt("Примечание:",r.note);if(note===null)return;
+ Object.assign(r,{branch:branch.trim(),order:order.trim(),delivery:delivery.trim(),note:note.trim()});
+ save();render();
+}
+function delRow(si,ri){
+ if(!confirm("Удалить график «"+db[si].schedules[ri].branch+"»?"))return;
+ db[si].schedules.splice(ri,1);if(!db[si].schedules.length)db.splice(si,1);save();render();
+}
+function delSupplier(si){
+ if(!confirm("Удалить поставщика «"+db[si].name+"»?"))return;
+ db.splice(si,1);save();render();
+}
+function clearDB(){
+ if(!db.length||!confirm("Удалить всю базу?"))return;
+ db=[];save();render();
+}
+
+
+
+
+render();
+</script>
+<script>window.addEventListener('storage',e=>{if(e.key==='optimaOrderSystem_v1'&&e.newValue){try{const x=JSON.parse(e.newValue);if(x&&Array.isArray(x.suppliers)&&Array.isArray(x.products)&&Array.isArray(x.links)){master=x;db=master.suppliers;render();}}catch(err){}}});</script>
+</body>
+</html>
